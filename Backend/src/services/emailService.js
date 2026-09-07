@@ -2,8 +2,14 @@ const nodemailer = require('nodemailer');
 
 const sendApprovalEmail = async (toEmail, link) => {
     // 1. Crear el transportador (transporter) configurado para Gmail
+    //    Usamos host/port explícitos (en vez de "service: 'gmail'") y
+    //    forzamos IPv4 (family: 4) porque el entorno de Render a veces
+    //    falla al conectar por IPv6 a los servidores de Gmail.
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        family: 4,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_APP_PASSWORD

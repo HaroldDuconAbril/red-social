@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Bell, Check, X, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { API_URL } from '../config';
+import { API_URL, getImageUrl } from '../config';
 
 export default function NotificationBell() {
   const { user } = useContext(AuthContext);
@@ -94,7 +94,7 @@ export default function NotificationBell() {
                   {/* Foto de Perfil Redonda */}
                   <div className="w-12 h-12 bg-black/50 border border-white/10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner">
                     {req.profile_picture_url ? (
-                      <img src={`${API_URL}${req.profile_picture_url}`} alt="avatar" className="w-full h-full object-cover" />
+                     <img src={getImageUrl(req.profile_picture_url)} alt="avatar" className="w-full h-full object-cover" />
                     ) : (
                       <User size={20} className="text-gray-400" />
                     )}

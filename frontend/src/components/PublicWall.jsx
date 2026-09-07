@@ -5,6 +5,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Send, Image as ImageIcon, Calendar, MapPin, Type } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { API_URL, getImageUrl } from '../config';
 
 export default function PublicWall() {
   const navigate = useNavigate();
@@ -172,8 +173,7 @@ export default function PublicWall() {
                   activities.map((act) => (
                     <div key={act.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition">
                       {act.image_url && (
-                        <img src={`${API_URL}${act.image_url}`} alt={act.title} className="w-full h-48 object-cover" />
-                      )}
+<img src={getImageUrl(act.image_url)} alt={act.title} className="w-full h-48 object-cover" />                      )}
                       <div className="p-5">
                         <h3 className="text-xl font-black text-red-400">{act.title}</h3>
                         <p className="text-gray-300 mt-2 text-sm whitespace-pre-wrap">{act.description}</p>

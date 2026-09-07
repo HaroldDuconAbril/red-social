@@ -17,6 +17,10 @@ const pool = process.env.DATABASE_URL
         port: process.env.DB_PORT,
     });
 
+    pool.on('error', (err) => {
+    console.error('⚠️ Error inesperado en una conexión inactiva del pool (probablemente Neon cerró la conexión por inactividad):', err.message);
+});
+
 // Comprobamos la conexión inicial
 pool.connect()
     .then(() => console.log('✅ Conectado a la base de datos PostgreSQL'))

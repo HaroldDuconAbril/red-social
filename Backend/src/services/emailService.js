@@ -6,15 +6,16 @@ const sendApprovalEmail = async (toEmail, link) => {
     //    forzamos IPv4 (family: 4) porque el entorno de Render a veces
     //    falla al conectar por IPv6 a los servidores de Gmail.
     const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        family: 4,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_APP_PASSWORD
-        }
-    });
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    family: 4,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASSWORD
+    }
+});
 
     // 2. Configurar el contenido del correo
     const mailOptions = {

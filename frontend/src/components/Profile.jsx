@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { ImagePlus, Lock, Camera, Info, CheckCircle, AlertCircle } from 'lucide-react';
-import { API_URL } from '../config';
+import { API_URL, getImageUrl } from '../config';
 
 export default function Profile() {
   const { user } = useContext(AuthContext);
@@ -180,7 +180,7 @@ export default function Profile() {
             <div className="relative w-32 h-32 mx-auto mb-4 group">
               {profileData?.profile_picture_url ? (
                 <img 
-                  src={`${API_URL}${profileData.profile_picture_url}`} 
+                  src={getImageUrl(profileData.profile_picture_url)} 
                   alt="Perfil" 
                   className="w-full h-full rounded-full object-cover border-4 border-red-500/50 shadow-[0_0_20px_rgba(220,38,38,0.3)]"
                 />
@@ -299,7 +299,7 @@ export default function Profile() {
                   {myPhotos.map(photo => (
                     <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/50">
                       <img 
-                        src={`${API_URL}${photo.photo_url}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`} 
+                        src={`${getImageUrl(photo.photo_url)}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`} 
                         alt="Privada"
                         className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110" 
                       />

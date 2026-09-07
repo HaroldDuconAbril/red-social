@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { CheckCircle, XCircle, FileImage, ShieldAlert, Users, ListTodo, Trash2, UserPlus, ShieldPlus, Mail, Layers, MonitorPlay, PlusCircle, Edit3 } from 'lucide-react';
 import { API_URL } from '../config';
+import { toast } from 'react-hot-toast';
 
 export default function AdminPanel() {
   const { user } = useContext(AuthContext);
@@ -75,7 +76,7 @@ export default function AdminPanel() {
     const subcategoryId = assignments[requestId]?.subcategory_id;
 
     if (action === 'approve' && !subcategoryId) {
-      alert('⚠️ Debes asignar una Categoría y Subcategoría antes de aprobar al usuario.');
+toast.error('Debes asignar una Categoría y Subcategoría antes de aprobar al usuario.');
       return;
     }
 
@@ -91,7 +92,7 @@ export default function AdminPanel() {
         return newAssigns;
       });
     } catch (error) {
-      console.error(`Error al procesar la solicitud (${action}):`, error);
+toast.error('Hubo un error al procesar esta solicitud.');
       alert('Hubo un error al procesar esta solicitud.');
     }
   };
@@ -103,7 +104,7 @@ export default function AdminPanel() {
       await axios.delete(`${API_URL}/api/admin/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(prev => prev.filter(u => u.id !== id));
     } catch (error) {
-      console.error('Error al eliminar usuario:', error);
+toast.error('Hubo un error al eliminar el usuario.');
       alert('Hubo un error al eliminar el usuario.');
     }
   };
@@ -113,11 +114,11 @@ export default function AdminPanel() {
     const token = getToken();
     try {
       await axios.post(API_URL + '/api/admin/categories', { name: newCatName }, { headers: { Authorization: `Bearer ${token}` } });
-      alert('¡Categoría creada con éxito!');
+      toast.success('¡Categoría creada con éxito!');
       setNewCatName('');
       loadData();
     } catch (error) {
-      console.error('Error al crear categoría:', error);
+     toast.error(error.response?.data?.error || 'Error al crear la categoría.');
       alert(error.response?.data?.error || 'Error al crear la categoría.');
     }
   };
@@ -128,11 +129,11 @@ export default function AdminPanel() {
     const token = getToken();
     try {
       await axios.put(`${API_URL}/api/admin/categories/${catId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
-      alert('¡Categoría actualizada con éxito!');
+      toast.success('¡Categoría actualizada con éxito!');
       loadData();
     } catch (error) {
       console.error('Error al editar categoría:', error);
-      alert('Error al actualizar la categoría.');
+      toast.error('Error al actualizar la categoría.');
     }
   };
 
@@ -141,12 +142,12 @@ export default function AdminPanel() {
     const token = getToken();
     try {
       await axios.post(API_URL + '/api/admin/subcategories', newSubCat, { headers: { Authorization: `Bearer ${token}` } });
-      alert('¡Subcategoría creada con éxito!');
+      toast.success('¡Subcategoría creada con éxito!');
       setNewSubCat({ category_id: '', name: '' });
       loadData();
     } catch (error) {
       console.error('Error al crear subcategoría:', error);
-      alert(error.response?.data?.error || 'Error al crear la subcategoría.');
+      toast.error(error.response?.data?.error || 'Error al crear la subcategoría.');
     }
   };
 
@@ -156,11 +157,11 @@ export default function AdminPanel() {
     const token = getToken();
     try {
       await axios.put(`${API_URL}/api/admin/subcategories/${subId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
-      alert('¡Grupo actualizado con éxito!');
+      toast.success('¡Grupo actualizado con éxito!');
       loadData();
     } catch (error) {
       console.error('Error al editar subcategoría:', error);
-      alert('Error al actualizar el grupo.');
+      toast.error('Error al actualizar el grupo.');
     }
   };
 
@@ -169,11 +170,11 @@ export default function AdminPanel() {
     const token = getToken();
     try {
       await axios.post(API_URL + '/api/admin/force-approve', { email: bypassEmail }, { headers: { Authorization: `Bearer ${token}` } });
-      alert('¡Aprobación forzada con éxito! Correo enviado.');
+      toast.success('¡Aprobación forzada con éxito! Correo enviado.');
       setBypassEmail('');
     } catch (error) {
       console.error('Error al forzar aprobación:', error);
-      alert(error.response?.data?.error || 'Error al procesar la solicitud.');
+      toast.error('Error al procesar la solicitud.');
     }
   };
 
@@ -182,12 +183,12 @@ export default function AdminPanel() {
     const token = getToken();
     try {
       await axios.post(API_URL + '/api/admin/promote-by-email', { email: adminEmail }, { headers: { Authorization: `Bearer ${token}` } });
-      alert('¡Permisos de administrador concedidos!');
+      toast.success('¡Permisos de administrador concedidos!');
       setAdminEmail('');
       loadData();
     } catch (error) {
       console.error('Error al dar permisos de admin:', error);
-      alert(error.response?.data?.error || 'Usuario no encontrado.');
+      toast.error(error.response?.data?.error || 'Usuario no encontrado.');
     }
   };
 

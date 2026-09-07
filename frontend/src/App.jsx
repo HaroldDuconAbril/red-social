@@ -15,6 +15,7 @@ import AdminPanel from './components/AdminPanel';
 import SetPassword from './components/auth/SetPassword';
 import VipRooms from './components/VipRooms';
 import RoomSession from './components/RoomSession';
+import InactivityModal from './components/InactivityModal';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
@@ -170,6 +171,7 @@ function App() {
       <Router>
         {/* Toaster agregado para las notificaciones globales */}
         <Toaster position="top-right" toastOptions={{ style: { background: '#0E1320', color: '#fff', border: '1px solid #333' } }} />
+        <InactivityModal />
         <AppRoutes />
       </Router>
     </AuthProvider>

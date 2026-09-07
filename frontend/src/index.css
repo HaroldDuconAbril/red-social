@@ -4,7 +4,7 @@
 
 /* Clase para el fondo global de la aplicación */
 .app-background {
-  background-image: url('/favicon.png');
+  background-image: url('/fondo.png');
   background-size: cover;      /* Hace que la imagen cubra toda la pantalla */
   background-position: center; /* Mantiene la imagen centrada */
   background-attachment: fixed; /* Evita que el fondo se mueva al hacer scroll */

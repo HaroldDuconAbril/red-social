@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus, Check, ShieldAlert, X, Image as ImageIcon, MapPin, User, Lock } from 'lucide-react';
 import { API_URL, getImageUrl } from '../config';
+import { toast } from 'react-hot-toast';
 
 export default function Explore() {
   const { user } = useContext(AuthContext);
@@ -66,9 +67,9 @@ export default function Explore() {
       });
       setSelectedUser(res.data);
     } catch (error) {
-      console.error('Error al cargar detalle del perfil:', error);
-      alert('No se pudo cargar la información del usuario.');
-    } finally {
+  console.error('Error al cargar detalle del perfil:', error);
+  toast.error('No se pudo cargar la información del usuario.');
+} finally {
       setUserDetailLoading(false);
     }
   };

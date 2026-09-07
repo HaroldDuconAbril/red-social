@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { ArrowLeft, MessageSquare, Send, CheckCircle2, Home } from 'lucide-react';
 import { API_URL } from '../config';
+import { toast } from 'react-hot-toast';
 
 export default function RoomSession() {
   const { roomId } = useParams();
@@ -29,10 +30,10 @@ export default function RoomSession() {
         const currentRoom = res.data.rooms.find(r => r.id === parseInt(roomId));
         
         if (!currentRoom) {
-          alert('No tienes acceso a esta sala o no existe.');
-          navigate('/vip-rooms');
-          return;
-        }
+  toast.error('No tienes acceso a esta sala o no existe.');
+  navigate('/vip-rooms');
+  return;
+}
         setRoomData(currentRoom);
 
         if (currentRoom.room_type === 'chat') {
@@ -67,9 +68,9 @@ export default function RoomSession() {
       setChatMessages(prev => [...prev, res.data]);
       setMessage('');
     } catch (error) {
-      console.error('Error al enviar el mensaje:', error);
-      alert('No se pudo enviar el mensaje.');
-    }
+  console.error('Error al enviar el mensaje:', error);
+  toast.error('No se pudo enviar el mensaje.');
+}
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-white font-bold bg-[#080B12]">Entrando a la sala...</div>;

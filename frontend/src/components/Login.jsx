@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { API_URL } from '../config';
+import { toast } from 'react-hot-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -32,9 +33,9 @@ const Login = () => {
       }
       
     } catch (error) {
-      console.error(error);
-      alert('Credenciales inválidas o error de conexión.');
-    }
+  console.error(error);
+  toast.error('Credenciales inválidas o error de conexión.');
+}
   };
 
   return (

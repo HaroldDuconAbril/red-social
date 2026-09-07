@@ -4,6 +4,7 @@ import { Send, Search, User, Lock, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { API_URL } from '../config';
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function Chat() {
       if (!token) return;
 
       try {
-        const response = await axios.get('http://localhost:5000/api/friendships/contacts', {
+        const response = await axios.get(API_URL + '/api/friendships/contacts', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setContactos(response.data.contacts || []);
@@ -46,7 +47,7 @@ export default function Chat() {
       const token = user?.token || localStorage.getItem('token');
       try {
         // Llama a la ruta getChatHistory que acabas de mostrarme
-        const response = await axios.get(`http://localhost:5000/api/messages/${activeChat.user_id}`, {
+        const response = await axios.get(`${API_URL}/api/messages/${activeChat.user_id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setChatHistory(response.data.messages || []);
@@ -75,7 +76,7 @@ export default function Chat() {
 
     try {
       // Llama a tu controlador sendMessage
-      const response = await axios.post('http://localhost:5000/api/messages', {
+      const response = await axios.post(API_URL + '/api/messages', {
         receiver_id: activeChat.user_id,
         content: tempMessage
       }, {
@@ -144,7 +145,7 @@ export default function Chat() {
                   >
                     <div className="relative">
                       {contacto.profile_picture_url ? (
-                        <img src={`http://localhost:5000${contacto.profile_picture_url}`} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-white/10"/>
+                        <img src={`${API_URL}${contacto.profile_picture_url}`} alt="avatar" className="w-12 h-12 rounded-full object-cover border border-white/10"/>
                       ) : (
                         <div className="w-12 h-12 bg-black/50 border border-white/10 rounded-full flex items-center justify-center text-gray-400">
                           <User size={20} />
@@ -174,7 +175,7 @@ export default function Chat() {
                   {/* Cabecera del Chat Activo */}
                   <div className="p-6 border-b border-white/10 flex items-center gap-3 bg-black/20 z-10">
                     <div className="w-10 h-10 bg-black/50 border border-white/10 rounded-full flex items-center justify-center text-gray-400 overflow-hidden">
-                      {activeChat.profile_picture_url ? <img src={`http://localhost:5000${activeChat.profile_picture_url}`} alt="avatar" className="w-full h-full object-cover"/> : <User size={18} />}
+                      {activeChat.profile_picture_url ? <img src={`${API_URL}${activeChat.profile_picture_url}`} alt="avatar" className="w-full h-full object-cover"/> : <User size={18} />}
                     </div>
                     <div>
                       <h3 className="text-white font-bold">{activeChat.alias_name}</h3>

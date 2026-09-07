@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { CheckCircle, XCircle, FileImage, ShieldAlert, Users, ListTodo, Trash2, UserPlus, ShieldPlus, Mail, Layers, MonitorPlay, PlusCircle, Edit3 } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function AdminPanel() {
   const { user } = useContext(AuthContext);
@@ -35,11 +36,11 @@ export default function AdminPanel() {
     setLoading(true);
     try {
       const [reqRes, userRes, catRes, subcatRes, roomsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/verification/pending', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/subcategories', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/admin/rooms', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(API_URL + '/api/admin/verification/pending', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(API_URL + '/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(API_URL + '/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(API_URL + '/api/admin/subcategories', { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(API_URL + '/api/admin/rooms', { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setRequests(reqRes.data || []);
       setUsers(userRes.data || []);
@@ -79,7 +80,7 @@ export default function AdminPanel() {
     }
 
     try {
-      await axios.put(`http://localhost:5000/api/admin/verification/${requestId}/review`, 
+      await axios.put(`${API_URL}/api/admin/verification/${requestId}/review`, 
         { status: backendStatus, subcategory_id: subcategoryId }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -99,7 +100,7 @@ export default function AdminPanel() {
     const token = getToken();
     if (!window.confirm('¿Eliminar usuario permanentemente?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API_URL}/api/admin/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(prev => prev.filter(u => u.id !== id));
     } catch (error) {
       console.error('Error al eliminar usuario:', error);
@@ -111,7 +112,7 @@ export default function AdminPanel() {
     e.preventDefault();
     const token = getToken();
     try {
-      await axios.post('http://localhost:5000/api/admin/categories', { name: newCatName }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(API_URL + '/api/admin/categories', { name: newCatName }, { headers: { Authorization: `Bearer ${token}` } });
       alert('¡Categoría creada con éxito!');
       setNewCatName('');
       loadData();
@@ -126,7 +127,7 @@ export default function AdminPanel() {
     if (!newName || !newName.trim() || newName === currentName) return;
     const token = getToken();
     try {
-      await axios.put(`http://localhost:5000/api/admin/categories/${catId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API_URL}/api/admin/categories/${catId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
       alert('¡Categoría actualizada con éxito!');
       loadData();
     } catch (error) {
@@ -139,7 +140,7 @@ export default function AdminPanel() {
     e.preventDefault();
     const token = getToken();
     try {
-      await axios.post('http://localhost:5000/api/admin/subcategories', newSubCat, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(API_URL + '/api/admin/subcategories', newSubCat, { headers: { Authorization: `Bearer ${token}` } });
       alert('¡Subcategoría creada con éxito!');
       setNewSubCat({ category_id: '', name: '' });
       loadData();
@@ -154,7 +155,7 @@ export default function AdminPanel() {
     if (!newName || !newName.trim() || newName === currentName) return;
     const token = getToken();
     try {
-      await axios.put(`http://localhost:5000/api/admin/subcategories/${subId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API_URL}/api/admin/subcategories/${subId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
       alert('¡Grupo actualizado con éxito!');
       loadData();
     } catch (error) {
@@ -167,7 +168,7 @@ export default function AdminPanel() {
     e.preventDefault();
     const token = getToken();
     try {
-      await axios.post('http://localhost:5000/api/admin/force-approve', { email: bypassEmail }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(API_URL + '/api/admin/force-approve', { email: bypassEmail }, { headers: { Authorization: `Bearer ${token}` } });
       alert('¡Aprobación forzada con éxito! Correo enviado.');
       setBypassEmail('');
     } catch (error) {
@@ -180,7 +181,7 @@ export default function AdminPanel() {
     e.preventDefault();
     const token = getToken();
     try {
-      await axios.post('http://localhost:5000/api/admin/promote-by-email', { email: adminEmail }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post(API_URL + '/api/admin/promote-by-email', { email: adminEmail }, { headers: { Authorization: `Bearer ${token}` } });
       alert('¡Permisos de administrador concedidos!');
       setAdminEmail('');
       loadData();
@@ -200,7 +201,7 @@ export default function AdminPanel() {
     e.preventDefault();
     const token = getToken();
     try {
-      await axios.post('http://localhost:5000/api/admin/rooms', {
+      await axios.post(API_URL + '/api/admin/rooms', {
         name: newRoom.name,
         room_type: newRoom.type,
         participants: selectedUsersForRoom
@@ -220,7 +221,7 @@ export default function AdminPanel() {
     if (!window.confirm('¿Seguro que deseas disolver esta sala?')) return;
     const token = getToken();
     try {
-      await axios.put(`http://localhost:5000/api/admin/rooms/${roomId}/dissolve`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API_URL}/api/admin/rooms/${roomId}/dissolve`, {}, { headers: { Authorization: `Bearer ${token}` } });
       setRooms(prev => prev.filter(r => r.id !== roomId));
     } catch (error) {
       console.error('Error al disolver sala:', error);
@@ -524,11 +525,11 @@ export default function AdminPanel() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mt-auto">
-                    <a href={`http://localhost:5000${req.full_body_photo_url}?token=${encodeURIComponent(getToken() || '')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
+                    <a href={`${API_URL}${req.full_body_photo_url}?token=${encodeURIComponent(getToken() || '')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
                       <FileImage size={24} className="text-gray-400" />
                       <span className="text-xs font-bold text-gray-400 text-center">Cuerpo Entero</span>
                     </a>
-                    <a href={`http://localhost:5000${req.sign_photo_url}?token=${encodeURIComponent(getToken() || '')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
+                    <a href={`${API_URL}${req.sign_photo_url}?token=${encodeURIComponent(getToken() || '')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
                       <FileImage size={24} className="text-gray-400" />
                       <span className="text-xs font-bold text-gray-400 text-center">Seña Manual</span>
                     </a>

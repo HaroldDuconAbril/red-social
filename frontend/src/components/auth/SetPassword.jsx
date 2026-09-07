@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Lock, Eye, EyeOff, Users } from 'lucide-react';
+import { API_URL } from '../../config';
 
 export default function SetPassword() {
   const [searchParams] = useSearchParams();
@@ -18,7 +19,7 @@ export default function SetPassword() {
     e.preventDefault();
     try {
       // NUEVO: Enviamos el profileType al backend
-      await axios.post('http://localhost:5000/api/auth/set-password', { email, password, profileType });
+      await axios.post(API_URL + '/api/auth/set-password', { email, password, profileType });
       toast.success('¡Cuenta activada! Ya puedes iniciar sesión.');
       navigate('/login');
     } catch (err) {

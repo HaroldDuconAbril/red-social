@@ -2,6 +2,7 @@
 import {useState}from 'react';
 import axios from 'axios';
 import {Link}from 'react-router-dom';
+import { API_URL } from '../config';
 
 const RegisterRequest=()=>{
   const [formData,setFormData]=useState({
@@ -31,7 +32,7 @@ const RegisterRequest=()=>{
     data.append('sign_photo',formData.signPhoto);
 
     try{
-      const res=await axios.post('http://localhost:5000/api/verification/request',data);
+      const res=await axios.post(API_URL + '/api/verification/request',data);
       console.log('Respuesta del servidor:',res.data);
       setStatus('✅ Solicitud enviada correctamente. El administrador la revisará.');
       setFormData({

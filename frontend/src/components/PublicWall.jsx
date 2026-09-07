@@ -28,8 +28,8 @@ export default function PublicWall() {
   const fetchPublicData = async () => {
     try {
       const [wallRes, activitiesRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/public/wall'),
-        axios.get('http://localhost:5000/api/public/activities')
+        axios.get(API_URL + '/api/public/wall'),
+        axios.get(API_URL + '/api/public/activities')
       ]);
       setPosts(wallRes.data.posts || []);
       setActivities(activitiesRes.data.activities || []);
@@ -50,7 +50,7 @@ export default function PublicWall() {
     if (!newComment.trim()) return;
 
     try {
-      await axios.post('http://localhost:5000/api/public/wall', 
+      await axios.post(API_URL + '/api/public/wall', 
         { content: newComment },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -77,7 +77,7 @@ export default function PublicWall() {
         formData.append('activity_image', adminForm.image);
       }
 
-      await axios.post('http://localhost:5000/api/public/activities', formData, {
+      await axios.post(API_URL + '/api/public/activities', formData, {
         headers: { 
           Authorization: `Bearer ${user.token}`,
           'Content-Type': 'multipart/form-data'
@@ -172,7 +172,7 @@ export default function PublicWall() {
                   activities.map((act) => (
                     <div key={act.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-white/20 transition">
                       {act.image_url && (
-                        <img src={`http://localhost:5000${act.image_url}`} alt={act.title} className="w-full h-48 object-cover" />
+                        <img src={`${API_URL}${act.image_url}`} alt={act.title} className="w-full h-48 object-cover" />
                       )}
                       <div className="p-5">
                         <h3 className="text-xl font-black text-red-400">{act.title}</h3>

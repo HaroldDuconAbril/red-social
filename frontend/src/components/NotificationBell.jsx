@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Bell, Check, X, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { API_URL } from '../config';
 
 export default function NotificationBell() {
   const { user } = useContext(AuthContext);
@@ -15,7 +16,7 @@ export default function NotificationBell() {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/friendships/pending', {
+        const res = await axios.get(API_URL + '/api/friendships/pending', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         setRequests(res.data.requests);
@@ -43,7 +44,7 @@ export default function NotificationBell() {
   // Manejar el Aceptar / Rechazar
   const handleRespond = async (id, status) => {
     try {
-      await axios.put(`http://localhost:5000/api/friendships/${id}/respond`, 
+      await axios.put(`${API_URL}/api/friendships/${id}/respond`, 
         { status },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -93,7 +94,7 @@ export default function NotificationBell() {
                   {/* Foto de Perfil Redonda */}
                   <div className="w-12 h-12 bg-black/50 border border-white/10 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden shadow-inner">
                     {req.profile_picture_url ? (
-                      <img src={`http://localhost:5000${req.profile_picture_url}`} alt="avatar" className="w-full h-full object-cover" />
+                      <img src={`${API_URL}${req.profile_picture_url}`} alt="avatar" className="w-full h-full object-cover" />
                     ) : (
                       <User size={20} className="text-gray-400" />
                     )}

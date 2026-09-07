@@ -4,6 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { MonitorPlay, MessageSquare, Video, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // <-- ¡Añadido!
+import { API_URL } from '../config';
 
 export default function VipRooms() {
   const { user } = useContext(AuthContext);
@@ -14,7 +15,7 @@ export default function VipRooms() {
   useEffect(() => {
     const fetchMyRooms = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/rooms/my-rooms', {
+        const res = await axios.get(API_URL + '/api/rooms/my-rooms', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         setRooms(res.data.rooms || []);

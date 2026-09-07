@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus, Check, ShieldAlert, X, Image as ImageIcon, MapPin, User, Lock } from 'lucide-react';
+import { API_URL } from '../config';
 
 export default function Explore() {
   const { user } = useContext(AuthContext);
@@ -17,7 +18,7 @@ export default function Explore() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/profiles/all', {
+        const res = await axios.get(API_URL + '/api/profiles/all', {
           headers: { Authorization: `Bearer ${user.token}` }
         });
         
@@ -47,7 +48,7 @@ export default function Explore() {
     setRequestStatus(prev => ({ ...prev, [targetUserId]: 'loading' }));
     
     try {
-      await axios.post('http://localhost:5000/api/friendships/request', 
+      await axios.post(API_URL + '/api/friendships/request', 
         { receiver_id: targetUserId },
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
@@ -62,7 +63,7 @@ export default function Explore() {
   const handleOpenProfileModal = async (userId) => {
     setUserDetailLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/profiles/user/${userId}`, {
+      const res = await axios.get(`${API_URL}/api/profiles/user/${userId}`, {
         headers: { Authorization: `Bearer ${user.token}` }
       });
       setSelectedUser(res.data); // { profile: {...}, photos: [...], isFriend: true/false }
@@ -115,7 +116,7 @@ export default function Explore() {
                   <div className="w-20 h-20 mx-auto bg-black/50 border border-white/10 rounded-full flex items-center justify-center text-3xl text-gray-400 mb-4 shadow-inner overflow-hidden">
                     {profile.profile_picture_url ? (
                       <img 
-                        src={`http://localhost:5000${profile.profile_picture_url}`} 
+                        src={`${API_URL}${profile.profile_picture_url}`} 
                         alt="Foto de perfil" 
                         className="w-full h-full object-cover"
                       />
@@ -187,7 +188,7 @@ export default function Explore() {
               <div className="flex flex-col md:flex-row items-center gap-6 mb-8 border-b border-white/10 pb-6">
                 <div className="w-24 h-24 bg-black/50 border border-white/10 rounded-full overflow-hidden flex-shrink-0">
                   {selectedUser.profile.profile_picture_url ? (
-                    <img src={`http://localhost:5000${selectedUser.profile.profile_picture_url}`} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={`${API_URL}${selectedUser.profile.profile_picture_url}`} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-3xl">👤</div>
                   )}
@@ -244,7 +245,7 @@ export default function Explore() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {selectedUser.photos.map(photo => (
                       <div key={photo.id} className="aspect-square bg-black/50 border border-white/10 rounded-2xl overflow-hidden shadow-md">
-                        <img src={`http://localhost:5000${photo.photo_url}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`} alt="Galería" className="w-full h-full object-cover hover:scale-105 transition duration-300" />
+                        <img src={`${API_URL}${photo.photo_url}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`} alt="Galería" className="w-full h-full object-cover hover:scale-105 transition duration-300" />
                       </div>
                     ))}
                   </div>

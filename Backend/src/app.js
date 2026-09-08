@@ -13,6 +13,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const friendshipRoutes = require('./routes/friendshipRoutes'); // <-- AQUÍ ESTÁ LA BUENA
 const publicRoutes = require('./routes/publicRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 // const connectionRoutes = require('./routes/connectionRoutes'); <-- ELIMINADO PARA EVITAR EL CRASH
 
 const app = express();
@@ -40,6 +41,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+app.use('/api/reviews', reviewRoutes);
 
 // --- Carpeta de fotos públicas ---
 // IMPORTANTE: helmet() por defecto bloquea que otro origen (ej. tu frontend en :5173)

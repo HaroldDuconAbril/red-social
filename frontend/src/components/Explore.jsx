@@ -2,9 +2,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { UserPlus, Check, ShieldAlert, X, Image as ImageIcon, MapPin, User, Lock } from 'lucide-react';
+import { UserPlus, Check, ShieldAlert, X, Image as ImageIcon, MapPin, User, Lock, Star } from 'lucide-react';
 import { API_URL, getImageUrl } from '../config';
 import { toast } from 'react-hot-toast';
+import { StarDisplay, StarInput } from './StarRating';
 
 export default function Explore() {
   const { user } = useContext(AuthContext);
@@ -13,6 +14,12 @@ export default function Explore() {
   const [requestStatus, setRequestStatus] = useState({});
   const [selectedUser, setSelectedUser] = useState(null);
   const [userDetailLoading, setUserDetailLoading] = useState(false);
+
+  // Estados de calificaciones (reviews)
+  const [reviews, setReviews] = useState({ average: 0, count: 0, reviews: [] });
+  const [myReview, setMyReview] = useState(null);
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -62,16 +69,55 @@ export default function Explore() {
   const handleOpenProfileModal = async (userId) => {
     setUserDetailLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/profiles/user/${userId}`, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const [profileRes, reviewsRes, myReviewRes] = await Promise.all([
+        axios.get(`${API_URL}/api/profiles/user/${userId}`, { headers: { Authorization: `Bearer ${user.token}` } }),
+        axios.get(`${API_URL}/api/reviews/${userId}`, { headers: { Authorization: `Bearer ${user.token}` } }),
+        axios.get(`${API_URL}/api/reviews/${userId}/mine`, { headers: { Authorization: `Bearer ${user.token}` } })
+      ]);
+      setSelectedUser(profileRes.data);
+      setReviews(reviewsRes.data);
+      setMyReview(myReviewRes.data);
+      setReviewForm({
+        rating: myReviewRes.data?.rating || 0,
+        comment: myReviewRes.data?.comment || ''
       });
-      setSelectedUser(res.data);
     } catch (error) {
-  console.error('Error al cargar detalle del perfil:', error);
-  toast.error('No se pudo cargar la información del usuario.');
-} finally {
+      console.error('Error al cargar detalle del perfil:', error);
+      toast.error('No se pudo cargar la información del usuario.');
+    } finally {
       setUserDetailLoading(false);
     }
+  };
+
+  const handleSubmitReview = async (userId) => {
+    if (!reviewForm.rating) {
+      toast.error('Selecciona una calificación de 1 a 5 estrellas.');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await axios.post(`${API_URL}/api/reviews/${userId}`, reviewForm, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      toast.success('¡Calificación guardada!');
+      const reviewsRes = await axios.get(`${API_URL}/api/reviews/${userId}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setReviews(reviewsRes.data);
+      setMyReview({ rating: reviewForm.rating, comment: reviewForm.comment });
+    } catch (error) {
+      console.error('Error al guardar calificación:', error);
+      toast.error(error.response?.data?.error || 'No se pudo guardar la calificación.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedUser(null);
+    setReviews({ average: 0, count: 0, reviews: [] });
+    setMyReview(null);
+    setReviewForm({ rating: 0, comment: '' });
   };
 
   return (
@@ -177,7 +223,7 @@ export default function Explore() {
             <div className="bg-[#0E1320] border border-white/15 w-full max-w-2xl rounded-3xl p-6 md:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 
               <button
-                onClick={() => setSelectedUser(null)}
+                onClick={closeModal}
                 className="absolute top-6 right-6 p-2 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-full transition"
               >
                 <X size={20} />
@@ -196,6 +242,12 @@ export default function Explore() {
                   <p className="text-gray-400 text-sm mt-1 flex items-center justify-center md:justify-start gap-1">
                     <MapPin size={14} /> {selectedUser.profile.location || 'Sin ubicación'}
                   </p>
+                  <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                    <StarDisplay rating={reviews.average} size={16} />
+                    <span className="text-gray-400 text-xs">
+                      {reviews.average.toFixed(1)} ({reviews.count} {reviews.count === 1 ? 'reseña' : 'reseñas'})
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
                     <span className="bg-purple-900/40 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">
                       {selectedUser.profile.category_name}
@@ -244,6 +296,55 @@ export default function Explore() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* SECCIÓN DE CALIFICACIONES */}
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Star size={16} /> Calificaciones
+                </h4>
+
+                {/* Formulario para calificar (propio, anónimo) */}
+                <div className="bg-black/40 border border-white/5 rounded-2xl p-4 mb-4">
+                  <p className="text-gray-300 text-sm font-bold mb-2">
+                    {myReview ? 'Tu calificación' : 'Deja tu calificación'}
+                  </p>
+                  <StarInput
+                    value={reviewForm.rating}
+                    onChange={(n) => setReviewForm(prev => ({ ...prev, rating: n }))}
+                  />
+                  <textarea
+                    value={reviewForm.comment}
+                    onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                    placeholder="Escribe un comentario (opcional)..."
+                    maxLength={500}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 mt-3 text-white text-sm focus:outline-none focus:border-red-500 resize-none h-20"
+                  />
+                  <button
+                    onClick={() => handleSubmitReview(selectedUser.profile.user_id)}
+                    disabled={submittingReview}
+                    className="mt-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold px-4 py-2 rounded-xl text-sm transition-colors"
+                  >
+                    {submittingReview ? 'Guardando...' : myReview ? 'Actualizar calificación' : 'Enviar calificación'}
+                  </button>
+                </div>
+
+                {/* Lista de comentarios anónimos */}
+                <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                  {reviews.reviews.length === 0 ? (
+                    <p className="text-gray-500 text-sm italic text-center py-4">Aún no hay calificaciones.</p>
+                  ) : (
+                    reviews.reviews.map((r, idx) => (
+                      <div key={idx} className="bg-white/5 border border-white/5 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <StarDisplay rating={r.rating} size={14} />
+                          <span className="text-gray-600 text-[10px]">{new Date(r.created_at).toLocaleDateString()}</span>
+                        </div>
+                        {r.comment && <p className="text-gray-300 text-sm">{r.comment}</p>}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
             </div>

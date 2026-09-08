@@ -1,6 +1,7 @@
 // src/components/LandingPage.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { UserPlus, LogIn, Radio, Rocket } from 'lucide-react';
 
 export default function LandingPage({ user }) {
   return (
@@ -62,62 +63,62 @@ export default function LandingPage({ user }) {
             </div>
 
             {/* ZONA DE BOTONES */}
-            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 mt-8">
               {!user ? (
                 <>
                   <Link
                     to="/registro"
-                    className="bg-red-600 hover:bg-red-700 text-white font-black px-6 py-3 rounded-xl transition-colors text-center shadow-lg shadow-red-900/30"
+                    className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center shadow-lg shadow-red-900/30 text-sm sm:text-base"
                   >
-                    Crear cuenta
+                    <UserPlus size={18} /> Crear cuenta
                   </Link>
 
                   <Link
                     to="/login"
-                    className="bg-white hover:bg-gray-200 text-gray-950 font-black px-6 py-3 rounded-xl transition-colors text-center"
+                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center backdrop-blur-md text-sm sm:text-base"
                   >
-                    Ingresar
+                    <LogIn size={18} /> Ingresar
                   </Link>
-                  
+
                   <Link
                     to="/muro"
-                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-black px-6 py-3 rounded-xl transition-colors text-center backdrop-blur-md"
+                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center backdrop-blur-md text-sm sm:text-base"
                   >
-                    Ver Anuncios
+                    <Radio size={18} /> Ver Anuncios
                   </Link>
 
                   <a
                     href="https://conectalocal-two.vercel.app/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black px-6 py-3 rounded-xl transition-colors text-center shadow-lg shadow-purple-900/30"
+                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center backdrop-blur-md text-sm sm:text-base"
                   >
-                    Emprenderotikos
+                    <Rocket size={18} /> Emprenderotikos
                   </a>
                 </>
               ) : (
                 <>
                   <Link
                     to="/explorar"
-                    className="bg-red-600 hover:bg-red-700 text-white font-black px-6 py-3 rounded-xl transition-colors text-center shadow-lg shadow-red-900/30"
+                    className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center shadow-lg shadow-red-900/30 text-sm sm:text-base"
                   >
                     Ir a explorar
                   </Link>
-                  
+
                   <Link
                     to="/muro"
-                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-black px-6 py-3 rounded-xl transition-colors text-center backdrop-blur-md"
+                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center backdrop-blur-md text-sm sm:text-base"
                   >
-                    Ver Anuncios
+                    <Radio size={18} /> Ver Anuncios
                   </Link>
 
                   <a
                     href="https://conectalocal-two.vercel.app/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black px-6 py-3 rounded-xl transition-colors text-center shadow-lg shadow-purple-900/30"
+                    className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-5 py-3.5 rounded-2xl transition-all hover:-translate-y-0.5 text-center backdrop-blur-md text-sm sm:text-base"
                   >
-                    Emprenderotikos
+                    <Rocket size={18} /> Emprenderotikos
                   </a>
                 </>
               )}

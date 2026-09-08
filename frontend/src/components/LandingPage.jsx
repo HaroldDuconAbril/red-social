@@ -85,6 +85,15 @@ export default function LandingPage({ user }) {
                   >
                     Ver Anuncios
                   </Link>
+
+                  <a
+                    href="https://conectalocal-two.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black px-6 py-3 rounded-xl transition-colors text-center shadow-lg shadow-purple-900/30"
+                  >
+                    Emprenderotikos
+                  </a>
                 </>
               ) : (
                 <>
@@ -101,6 +110,15 @@ export default function LandingPage({ user }) {
                   >
                     Ver Anuncios
                   </Link>
+
+                  <a
+                    href="https://conectalocal-two.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black px-6 py-3 rounded-xl transition-colors text-center shadow-lg shadow-purple-900/30"
+                  >
+                    Emprenderotikos
+                  </a>
                 </>
               )}
             </div>

@@ -20,17 +20,19 @@ const createWallPost = async (req, res) => {
         const userId = req.user.id;
         const { content } = req.body;
 
-        if (!content) {
+        if (!content || !content.trim()) {
             return res.status(400).json({ error: 'El contenido es obligatorio.' });
         }
+
+        const trimmedContent = content.trim().slice(0, 250);
 
         const userQuery = await pool.query('SELECT username FROM users WHERE id = $1', [userId]);
         const aliasName = userQuery.rows.length > 0 ? userQuery.rows[0].username : 'Anónimo';
 
         const newPost = await pool.query(
-            `INSERT INTO public_wall_posts (alias_name, content) 
+            `INSERT INTO public_wall_posts (alias_name, content)
              VALUES ($1, $2) RETURNING *`,
-            [aliasName, content]
+            [aliasName, trimmedContent]
         );
 
         res.status(201).json({
@@ -69,12 +71,11 @@ const createActivityAd = async (req, res) => {
         let image_url = null;
 
         if (req.file) {
-            // Con Cloudinary, req.file.path YA es la URL pública completa
             image_url = req.file.path;
         }
 
         const newAd = await pool.query(
-            `INSERT INTO activities_ads (title, description, location, event_date, image_url) 
+            `INSERT INTO activities_ads (title, description, location, event_date, image_url)
              VALUES ($1, $2, $3, $4, $5) RETURNING *`,
             [title, description, location, event_date || null, image_url]
         );

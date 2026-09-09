@@ -1,2 +1,0 @@
-const pool = require('./src/config/db');
-pool.query('UPDATE profiles SET profile_picture_url = $1 WHERE user_id = $2 RETURNING user_id, profile_picture_url', ['/uploads/public/2c022416-57c7-4bc0-bb3a-f146610b0265-1782253237316-371123579.png', '2c022416-57c7-4bc0-bb3a-f146610b0265']).then((result) => console.log(JSON.stringify(result.rows, null, 2))).catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => pool.end());

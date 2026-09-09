@@ -21,4 +21,9 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 .vscode/
-.idea/backup.sql
+.idea/
+
+# Backups de base de datos (contienen datos sensibles, nunca subir)
+backup.sql
+*.sql
+!Backend/migrations/*.sql

@@ -1,12 +1,12 @@
 // src/routes/adminRoutes.js
 const express = require('express');
 const router = express.Router();
-const { 
-    getPendingRequests, 
-    reviewVerificationRequest, 
+const {
+    getPendingRequests,
+    reviewVerificationRequest,
     forceApproveUser,
     promoteAdminByEmail,
-    createActivityAd, 
+    createActivityAd,
     getAllUsers,
     updateUserGroup,
     deleteUser,
@@ -24,36 +24,31 @@ const {
 const verifyToken = require('../middleware/authMiddleware');
 const requireAdmin = require('../middleware/adminMiddleware');
 
+// Esto ya protege TODAS las rutas de este archivo; no hace falta repetirlo en cada una.
 router.use(verifyToken, requireAdmin);
 
-// Rutas de Verificación
-router.get('/verification/pending', verifyToken, getPendingRequests);
-router.put('/verification/:id/review', verifyToken, reviewVerificationRequest);
+router.get('/verification/pending', getPendingRequests);
+router.put('/verification/:id/review', reviewVerificationRequest);
 
-// Rutas de Acciones Especiales
-router.post('/force-approve', verifyToken, forceApproveUser);
-router.post('/promote-by-email', verifyToken, promoteAdminByEmail);
+router.post('/force-approve', forceApproveUser);
+router.post('/promote-by-email', promoteAdminByEmail);
 
-// Rutas de Usuarios
-router.get('/users', verifyToken, getAllUsers);
-router.put('/users/:id/group', verifyToken, updateUserGroup);
-router.delete('/users/:id', verifyToken, deleteUser);
-router.put('/users/:id/promote', verifyToken, promoteToAdmin); 
+router.get('/users', getAllUsers);
+router.put('/users/:id/group', updateUserGroup);
+router.delete('/users/:id', deleteUser);
+router.put('/users/:id/promote', promoteToAdmin);
 
-// Rutas de Categorías y Subcategorías
-router.get('/categories', verifyToken, getCategories);
-router.post('/categories', verifyToken, createCategory);
-router.put('/categories/:id', verifyToken, updateCategory);
-router.get('/subcategories', verifyToken, getSubcategories);
-router.post('/subcategories', verifyToken, createSubcategory);
-router.put('/subcategories/:id', verifyToken, updateSubcategory);
+router.get('/categories', getCategories);
+router.post('/categories', createCategory);
+router.put('/categories/:id', updateCategory);
+router.get('/subcategories', getSubcategories);
+router.post('/subcategories', createSubcategory);
+router.put('/subcategories/:id', updateSubcategory);
 
-// Rutas de Actividades
-router.post('/activities', verifyToken, createActivityAd);
+router.post('/activities', createActivityAd);
 
-// Rutas de Salas Grupales (Admin)
-router.get('/rooms', verifyToken, getActiveRooms);
-router.post('/rooms', verifyToken, createRoom);
-router.put('/rooms/:id/dissolve', verifyToken, dissolveRoom);
+router.get('/rooms', getActiveRooms);
+router.post('/rooms', createRoom);
+router.put('/rooms/:id/dissolve', dissolveRoom);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 // backend/seedAdmin.js
 const pool = require('./src/config/db'); 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const createAdmin = async () => {
     try {

@@ -2,26 +2,30 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Si existe DATABASE_URL (Neon en producción), la usamos con SSL.
-// Si no (desarrollo local), usamos las variables sueltas de siempre.
-const pool = process.env.DATABASE_URL
-    ? new Pool({
+const poolConfig = process.env.DATABASE_URL
+    ? {
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
-    })
-    : new Pool({
+    }
+    : {
         user: process.env.DB_USER,
         host: process.env.DB_HOST,
         database: process.env.DB_NAME,
         password: process.env.DB_PASSWORD,
         port: process.env.DB_PORT,
-    });
+    };
 
-    pool.on('error', (err) => {
+// Límites del pool: evita agotar las conexiones disponibles en Neon si sube el tráfico
+poolConfig.max = 15;
+poolConfig.idleTimeoutMillis = 30000;
+poolConfig.connectionTimeoutMillis = 5000;
+
+const pool = new Pool(poolConfig);
+
+pool.on('error', (err) => {
     console.error('⚠️ Error inesperado en una conexión inactiva del pool (probablemente Neon cerró la conexión por inactividad):', err.message);
 });
 
-// Comprobamos la conexión inicial
 pool.connect()
     .then(() => console.log('✅ Conectado a la base de datos PostgreSQL'))
     .catch((err) => console.error('❌ Error de conexión a la base de datos:', err.stack));

@@ -18,6 +18,11 @@ const reviewRoutes = require('./routes/reviewRoutes');
 // const connectionRoutes = require('./routes/connectionRoutes'); <-- ELIMINADO PARA EVITAR EL CRASH
 
 const app = express();
+
+
+app.set('trust proxy', 1);
+
+const { ipKeyGenerator } = rateLimit;
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 50,
@@ -30,10 +35,8 @@ const verificationLimiter = rateLimit({
     limit: 5,
     standardHeaders: true,
     legacyHeaders: false,
-    // Antes solo limitaba por IP: alguien podía mandar solicitudes de
-    // verificación de decenas de correos ajenos desde una sola IP dentro del
-    // mismo límite. Ahora también acotamos por el correo indicado.
-    keyGenerator: (req) => `${req.ip}:${(req.body?.email || '').toLowerCase()}`,
+   
+    keyGenerator: (req) => `${ipKeyGenerator(req.ip)}:${(req.body?.email || '').toLowerCase()}`,
     message: { error: 'Demasiadas solicitudes de verificación.' }
 });
 // --- Middlewares ---
@@ -49,12 +52,7 @@ app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 app.use('/api/reviews', reviewRoutes);
 
-// --- Carpeta de fotos públicas ---
-// IMPORTANTE: helmet() por defecto bloquea que otro origen (ej. tu frontend en :5173)
-// cargue estos recursos, aunque el servidor responda 200 OK. Por eso las fotos
-// de perfil no se veían. Le indicamos explícitamente que esta carpeta SÍ puede
-// compartirse entre orígenes (ya es pública por diseño), sin afectar el resto
-// de las protecciones de helmet en toda la API.
+
 const publicUploadsPath = path.join(__dirname, '../uploads/public');
 app.use('/uploads/public', express.static(publicUploadsPath, {
     setHeaders: (res) => {
@@ -62,7 +60,6 @@ app.use('/uploads/public', express.static(publicUploadsPath, {
     }
 }));
 
-// Compatibilidad con URLs viejas tipo /uploads/archivo.jpg (sin el prefijo /public/)
 app.use('/uploads', (req, res, next) => {
     if (!/^\/[^/]+$/.test(req.path)) return next();
     express.static(publicUploadsPath, {
@@ -72,12 +69,7 @@ app.use('/uploads', (req, res, next) => {
     })(req, res, next);
 });
 
-// --- RADAR DE DEBUG (Muy útil para ver qué peticiones llegan) ---
-// IMPORTANTE: registramos solo la ruta (req.path), NUNCA req.originalUrl ni la
-// query string completa. Antes cualquier token pasado por ?token=... (u otro
-// dato sensible en la URL) terminaba guardado tal cual en los logs del
-// servidor. Si necesitas depurar parámetros puntuales, hazlo explícitamente
-// y nunca con tokens/contraseñas.
+
 if (process.env.NODE_ENV !== 'production') {
     app.use((req, res, next) => {
         console.log(`🕵️‍♂️ Petición entrante: ${req.method} ${req.path}`);

@@ -8,7 +8,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
- 
+  // Ya no leemos el token de localStorage: la cookie httpOnly de sesión viaja
+  // sola con la petición. Para saber si ya hay sesión activa (por ejemplo al
+  // recargar la página) le preguntamos al backend quién es el usuario actual.
   useEffect(() => {
     let cancelled = false;
 
@@ -27,7 +29,9 @@ export const AuthProvider = ({ children }) => {
     return () => { cancelled = true; };
   }, []);
 
-  
+  // Se llama después de un login (o verify-2fa) exitoso. El backend ya dejó
+  // la cookie de sesión puesta; aquí solo guardamos los datos del usuario
+  // para la interfaz.
   const login = (data) => {
     const userData = data.user || data;
     if (!userData) {

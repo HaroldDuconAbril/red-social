@@ -1,6 +1,6 @@
 // src/components/AdminPanel.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { CheckCircle, XCircle, FileImage, ShieldAlert, Users, ListTodo, Trash2, UserPlus, ShieldPlus, Mail, Layers, MonitorPlay, PlusCircle, Edit3 } from 'lucide-react';
 import { API_URL } from '../config';
@@ -29,19 +29,16 @@ export default function AdminPanel() {
   const [bypassEmail, setBypassEmail] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
 
-  const getToken = () => user?.token || localStorage.getItem('token');
-
   const loadData = async () => {
-    const token = getToken();
-    if (!token) return;
+    if (!user) return;
     setLoading(true);
     try {
       const [reqRes, userRes, catRes, subcatRes, roomsRes] = await Promise.all([
-        axios.get(API_URL + '/api/admin/verification/pending', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(API_URL + '/api/admin/users', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(API_URL + '/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(API_URL + '/api/admin/subcategories', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(API_URL + '/api/admin/rooms', { headers: { Authorization: `Bearer ${token}` } })
+        api.get('/api/admin/verification/pending'),
+        api.get('/api/admin/users'),
+        api.get('/api/admin/categories'),
+        api.get('/api/admin/subcategories'),
+        api.get('/api/admin/rooms')
       ]);
       setRequests(reqRes.data || []);
       setUsers(userRes.data || []);
@@ -71,7 +68,6 @@ export default function AdminPanel() {
   };
 
   const handleAction = async (requestId, action) => {
-    const token = getToken();
     const backendStatus = action === 'approve' ? 'aprobado' : 'rechazado';
     const subcategoryId = assignments[requestId]?.subcategory_id;
 
@@ -81,9 +77,8 @@ toast.error('Debes asignar una Categoría y Subcategoría antes de aprobar al us
     }
 
     try {
-      await axios.put(`${API_URL}/api/admin/verification/${requestId}/review`, 
-        { status: backendStatus, subcategory_id: subcategoryId }, 
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.put(`/api/admin/verification/${requestId}/review`, 
+        { status: backendStatus, subcategory_id: subcategoryId }
       );
       setRequests(prev => prev.filter(req => req.id !== requestId));
       setAssignments(prev => {
@@ -98,10 +93,9 @@ toast.error('Hubo un error al procesar esta solicitud.');
   };
 
   const deleteUser = async (id) => {
-    const token = getToken();
     if (!window.confirm('¿Eliminar usuario permanentemente?')) return;
     try {
-      await axios.delete(`${API_URL}/api/admin/users/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await api.delete(`/api/admin/users/${id}`);
       setUsers(prev => prev.filter(u => u.id !== id));
     } catch (error) {
 toast.error('Hubo un error al eliminar el usuario.');
@@ -111,9 +105,8 @@ toast.error('Hubo un error al eliminar el usuario.');
 
   const handleCreateCategory = async (e) => {
     e.preventDefault();
-    const token = getToken();
     try {
-      await axios.post(API_URL + '/api/admin/categories', { name: newCatName }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.post('/api/admin/categories', { name: newCatName });
       toast.success('¡Categoría creada con éxito!');
       setNewCatName('');
       loadData();
@@ -126,9 +119,8 @@ toast.error('Hubo un error al eliminar el usuario.');
   const handleEditCategory = async (catId, currentName) => {
     const newName = prompt('Editar nombre de la categoría:', currentName);
     if (!newName || !newName.trim() || newName === currentName) return;
-    const token = getToken();
     try {
-      await axios.put(`${API_URL}/api/admin/categories/${catId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/api/admin/categories/${catId}`, { name: newName });
       toast.success('¡Categoría actualizada con éxito!');
       loadData();
     } catch (error) {
@@ -139,9 +131,8 @@ toast.error('Hubo un error al eliminar el usuario.');
 
   const handleCreateSubcategory = async (e) => {
     e.preventDefault();
-    const token = getToken();
     try {
-      await axios.post(API_URL + '/api/admin/subcategories', newSubCat, { headers: { Authorization: `Bearer ${token}` } });
+      await api.post('/api/admin/subcategories', newSubCat);
       toast.success('¡Subcategoría creada con éxito!');
       setNewSubCat({ category_id: '', name: '' });
       loadData();
@@ -154,9 +145,8 @@ toast.error('Hubo un error al eliminar el usuario.');
   const handleEditSubcategory = async (subId, currentName) => {
     const newName = prompt('Editar nombre del grupo:', currentName);
     if (!newName || !newName.trim() || newName === currentName) return;
-    const token = getToken();
     try {
-      await axios.put(`${API_URL}/api/admin/subcategories/${subId}`, { name: newName }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/api/admin/subcategories/${subId}`, { name: newName });
       toast.success('¡Grupo actualizado con éxito!');
       loadData();
     } catch (error) {
@@ -167,9 +157,8 @@ toast.error('Hubo un error al eliminar el usuario.');
 
   const handleForceApprove = async (e) => {
     e.preventDefault();
-    const token = getToken();
     try {
-      await axios.post(API_URL + '/api/admin/force-approve', { email: bypassEmail }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.post('/api/admin/force-approve', { email: bypassEmail });
       toast.success('¡Aprobación forzada con éxito! Correo enviado.');
       setBypassEmail('');
     } catch (error) {
@@ -180,9 +169,8 @@ toast.error('Hubo un error al eliminar el usuario.');
 
   const handlePromoteAdmin = async (e) => {
     e.preventDefault();
-    const token = getToken();
     try {
-      await axios.post(API_URL + '/api/admin/promote-by-email', { email: adminEmail }, { headers: { Authorization: `Bearer ${token}` } });
+      await api.post('/api/admin/promote-by-email', { email: adminEmail });
       toast.success('¡Permisos de administrador concedidos!');
       setAdminEmail('');
       loadData();
@@ -200,13 +188,12 @@ toast.error('Hubo un error al eliminar el usuario.');
 
   const handleCreateRoom = async (e) => {
     e.preventDefault();
-    const token = getToken();
     try {
-      await axios.post(API_URL + '/api/admin/rooms', {
+      await api.post('/api/admin/rooms', {
         name: newRoom.name,
         room_type: newRoom.type,
         participants: selectedUsersForRoom
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      });
       
       alert('Sala creada y usuarios asignados con éxito.');
       setNewRoom({ name: '', type: 'chat' });
@@ -220,9 +207,8 @@ toast.error('Hubo un error al eliminar el usuario.');
 
   const handleDissolveRoom = async (roomId) => {
     if (!window.confirm('¿Seguro que deseas disolver esta sala?')) return;
-    const token = getToken();
     try {
-      await axios.put(`${API_URL}/api/admin/rooms/${roomId}/dissolve`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await api.put(`/api/admin/rooms/${roomId}/dissolve`, {});
       setRooms(prev => prev.filter(r => r.id !== roomId));
     } catch (error) {
       console.error('Error al disolver sala:', error);
@@ -526,11 +512,13 @@ toast.error('Hubo un error al eliminar el usuario.');
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mt-auto">
-                    <a href={`${API_URL}${req.full_body_photo_url}?token=${encodeURIComponent(getToken() || '')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
+                    {/* Ya no llevamos el JWT en la URL: la cookie httpOnly de sesión
+                        se manda sola incluso al abrir el enlace en una pestaña nueva. */}
+                    <a href={`${API_URL}${req.full_body_photo_url}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
                       <FileImage size={24} className="text-gray-400" />
                       <span className="text-xs font-bold text-gray-400 text-center">Cuerpo Entero</span>
                     </a>
-                    <a href={`${API_URL}${req.sign_photo_url}?token=${encodeURIComponent(getToken() || '')}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
+                    <a href={`${API_URL}${req.sign_photo_url}`} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 transition-colors">
                       <FileImage size={24} className="text-gray-400" />
                       <span className="text-xs font-bold text-gray-400 text-center">Seña Manual</span>
                     </a>

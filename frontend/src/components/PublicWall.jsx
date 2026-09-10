@@ -1,7 +1,7 @@
 // src/components/PublicWall.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { Send, Image as ImageIcon, Calendar, MapPin, Type } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -29,8 +29,8 @@ export default function PublicWall() {
   const fetchPublicData = async () => {
     try {
       const [wallRes, activitiesRes] = await Promise.all([
-        axios.get(API_URL + '/api/public/wall'),
-        axios.get(API_URL + '/api/public/activities')
+        api.get('/api/public/wall'),
+        api.get('/api/public/activities')
       ]);
       setPosts(wallRes.data.posts || []);
       setActivities(activitiesRes.data.activities || []);
@@ -51,10 +51,7 @@ export default function PublicWall() {
     if (!newComment.trim()) return;
 
     try {
-      await axios.post(API_URL + '/api/public/wall', 
-        { content: newComment },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
+      await api.post('/api/public/wall', { content: newComment });
       toast.success('Comentario anónimo publicado');
       setNewComment('');
       fetchPublicData(); // Recargamos para ver el nuevo comentario
@@ -78,12 +75,7 @@ export default function PublicWall() {
         formData.append('activity_image', adminForm.image);
       }
 
-      await axios.post(API_URL + '/api/public/activities', formData, {
-        headers: { 
-          Authorization: `Bearer ${user.token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      await api.post('/api/public/activities', formData);
 
       toast.success('Anuncio publicado con éxito');
       setAdminForm({ title: '', description: '', location: '', event_date: '', image: null });

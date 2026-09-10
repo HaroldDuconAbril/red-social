@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { ArrowLeft, MessageSquare, Send, CheckCircle2, Home } from 'lucide-react';
@@ -24,9 +24,7 @@ export default function RoomSession() {
   useEffect(() => {
     const fetchRoomAndMessages = async () => {
       try {
-        const res = await axios.get(API_URL + '/api/rooms/my-rooms', {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
+        const res = await api.get('/api/rooms/my-rooms');
         const currentRoom = res.data.rooms.find(r => r.id === parseInt(roomId));
         
         if (!currentRoom) {
@@ -37,9 +35,7 @@ export default function RoomSession() {
         setRoomData(currentRoom);
 
         if (currentRoom.room_type === 'chat') {
-          const msgRes = await axios.get(`${API_URL}/api/rooms/${roomId}/messages`, {
-            headers: { Authorization: `Bearer ${user.token}` }
-          });
+          const msgRes = await api.get(`/api/rooms/${roomId}/messages`);
           setChatMessages(msgRes.data || []);
         }
       } catch (error) {
@@ -49,7 +45,7 @@ export default function RoomSession() {
       }
     };
 
-    if (user?.token) {
+    if (user) {
       fetchRoomAndMessages();
     }
   }, [roomId, user, navigate]);
@@ -59,11 +55,7 @@ export default function RoomSession() {
     if (!message.trim()) return;
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/rooms/${roomId}/messages`,
-        { message },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
+      const res = await api.post(`/api/rooms/${roomId}/messages`, { message });
 
       setChatMessages(prev => [...prev, res.data]);
       setMessage('');

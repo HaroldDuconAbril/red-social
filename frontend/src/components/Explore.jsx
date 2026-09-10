@@ -1,6 +1,6 @@
 // src/components/Explore.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus, Check, ShieldAlert, X, Image as ImageIcon, MapPin, User, Lock, Star } from 'lucide-react';
 import { API_URL, getImageUrl } from '../config';
@@ -24,9 +24,7 @@ export default function Explore() {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const res = await axios.get(API_URL + '/api/profiles/all', {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
+        const res = await api.get('/api/profiles/all');
 
         let explorePool = [];
 
@@ -44,7 +42,7 @@ export default function Explore() {
       }
     };
 
-    if (user?.token) {
+    if (user) {
       fetchProfiles();
     }
   }, [user]);
@@ -54,10 +52,7 @@ export default function Explore() {
     setRequestStatus(prev => ({ ...prev, [targetUserId]: 'loading' }));
 
     try {
-      await axios.post(API_URL + '/api/friendships/request',
-        { receiver_id: targetUserId },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
+      await api.post('/api/friendships/request', { receiver_id: targetUserId });
 
       setRequestStatus(prev => ({ ...prev, [targetUserId]: 'sent' }));
     } catch (error) {
@@ -70,9 +65,9 @@ export default function Explore() {
     setUserDetailLoading(true);
     try {
       const [profileRes, reviewsRes, myReviewRes] = await Promise.all([
-        axios.get(`${API_URL}/api/profiles/user/${userId}`, { headers: { Authorization: `Bearer ${user.token}` } }),
-        axios.get(`${API_URL}/api/reviews/${userId}`, { headers: { Authorization: `Bearer ${user.token}` } }),
-        axios.get(`${API_URL}/api/reviews/${userId}/mine`, { headers: { Authorization: `Bearer ${user.token}` } })
+        api.get(`/api/profiles/user/${userId}`),
+        api.get(`/api/reviews/${userId}`),
+        api.get(`/api/reviews/${userId}/mine`)
       ]);
       setSelectedUser(profileRes.data);
       setReviews(reviewsRes.data);
@@ -96,13 +91,9 @@ export default function Explore() {
     }
     setSubmittingReview(true);
     try {
-      await axios.post(`${API_URL}/api/reviews/${userId}`, reviewForm, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
+      await api.post(`/api/reviews/${userId}`, reviewForm);
       toast.success('¡Calificación guardada!');
-      const reviewsRes = await axios.get(`${API_URL}/api/reviews/${userId}`, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
+      const reviewsRes = await api.get(`/api/reviews/${userId}`);
       setReviews(reviewsRes.data);
       setMyReview({ rating: reviewForm.rating, comment: reviewForm.comment });
     } catch (error) {
@@ -291,7 +282,7 @@ export default function Explore() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {selectedUser.photos.map(photo => (
                       <div key={photo.id} className="aspect-square bg-black/50 border border-white/10 rounded-2xl overflow-hidden shadow-md">
-                        <img src={`${getImageUrl(photo.photo_url)}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`} alt="Galería" className="w-full h-full object-cover hover:scale-105 transition duration-300" />
+                        <img src={getImageUrl(photo.photo_url)} alt="Galería" className="w-full h-full object-cover hover:scale-105 transition duration-300" />
                       </div>
                     ))}
                   </div>

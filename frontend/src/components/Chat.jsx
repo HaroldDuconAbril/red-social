@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Send, Search, User, Lock, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { API_URL, getImageUrl } from '../config';
 
@@ -21,13 +21,10 @@ export default function Chat() {
   // 1. Cargar la lista de contactos (friendships)
   useEffect(() => {
     const fetchContacts = async () => {
-      const token = user?.token || localStorage.getItem('token');
-      if (!token) return;
+      if (!user) return;
 
       try {
-        const response = await axios.get(API_URL + '/api/friendships/contacts', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/api/friendships/contacts');
         setContactos(response.data.contacts || []);
       } catch (error) {
         console.error('Error al cargar contactos:', error);
@@ -44,12 +41,9 @@ export default function Chat() {
     const fetchMessages = async () => {
       if (!activeChat) return;
       
-      const token = user?.token || localStorage.getItem('token');
       try {
         // Llama a la ruta getChatHistory que acabas de mostrarme
-        const response = await axios.get(`${API_URL}/api/messages/${activeChat.user_id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/api/messages/${activeChat.user_id}`);
         setChatHistory(response.data.messages || []);
         scrollToBottom();
       } catch (error) {
@@ -70,17 +64,14 @@ export default function Chat() {
     e.preventDefault();
     if (!message.trim() || !activeChat) return;
 
-    const token = user?.token || localStorage.getItem('token');
     const tempMessage = message;
     setMessage(''); // Limpiamos el input rápido para mejor UX
 
     try {
-      // Llama a tu controlador sendMessage
-      const response = await axios.post(API_URL + '/api/messages', {
+      // Llama a tu controlador sendMessage (la cookie de sesión viaja sola)
+      const response = await api.post('/api/messages', {
         receiver_id: activeChat.user_id,
         content: tempMessage
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       // Agregamos el mensaje recién enviado a la pantalla inmediatamente

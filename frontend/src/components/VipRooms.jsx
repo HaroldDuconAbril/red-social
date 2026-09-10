@@ -1,6 +1,6 @@
 // src/components/VipRooms.jsx
 import React, { useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { MonitorPlay, MessageSquare, Video, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // <-- ¡Añadido!
@@ -15,9 +15,7 @@ export default function VipRooms() {
   useEffect(() => {
     const fetchMyRooms = async () => {
       try {
-        const res = await axios.get(API_URL + '/api/rooms/my-rooms', {
-          headers: { Authorization: `Bearer ${user.token}` }
-        });
+        const res = await api.get('/api/rooms/my-rooms');
         setRooms(res.data.rooms || []);
       } catch (error) {
         console.error('Error al cargar salas VIP:', error);
@@ -26,7 +24,7 @@ export default function VipRooms() {
       }
     };
 
-    if (user?.token) fetchMyRooms();
+    if (user) fetchMyRooms();
   }, [user]);
 
   return (

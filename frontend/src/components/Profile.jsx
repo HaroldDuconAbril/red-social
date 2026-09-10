@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../api';
 import { ImagePlus, Lock, Camera, Info, CheckCircle, AlertCircle } from 'lucide-react';
 import { API_URL, getImageUrl } from '../config';
 
@@ -33,12 +33,9 @@ export default function Profile() {
 
   // Función para cargar la galería privada
   const fetchGallery = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!user) return;
     try {
-      const res = await axios.get(API_URL + '/api/profiles/gallery', { 
-        headers: { Authorization: `Bearer ${token}` } 
-      });
+      const res = await api.get('/api/profiles/gallery');
       setMyPhotos(res.data || []); 
     } catch (error) {
       console.error('Error al cargar la galería:', error);
@@ -54,10 +51,9 @@ export default function Profile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) { setLoading(false); return; }
+      if (!user) { setLoading(false); return; }
       try {
-        const res = await axios.get(API_URL + '/api/profiles/me', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await api.get('/api/profiles/me');
         setProfileData(res.data);
         setEditForm({
           alias_name: res.data.alias_name || '',
@@ -80,7 +76,6 @@ export default function Profile() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setUpdateStatus('Guardando...');
-    const token = localStorage.getItem('token');
 
     const formData = new FormData();
     formData.append('alias_name', editForm.alias_name);
@@ -91,12 +86,10 @@ export default function Profile() {
     }
 
     try {
-      const res = await axios.put(API_URL + '/api/profiles/me', formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' 
-        }
-      });
+      // Con FormData, axios arma solo el header Content-Type con el
+      // boundary correcto; no hace falta ponerlo a mano (y ponerlo mal
+      // rompe el parseo multipart). La cookie de sesión viaja sola.
+      const res = await api.put('/api/profiles/me', formData);
       
       setProfileData({ ...profileData, ...res.data.profile, alias_name: editForm.alias_name });
       setUpdateStatus('');
@@ -117,13 +110,7 @@ export default function Profile() {
     formData.append('private_photo', file);
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(API_URL + '/api/profiles/gallery', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      await api.post('/api/profiles/gallery', formData);
       
       showToast('Foto subida a tu galería privada', 'success');
       fetchGallery(); // Recargamos la galería para mostrar la nueva foto
@@ -139,9 +126,7 @@ export default function Profile() {
   // Función para eliminar
   const deletePhoto = async (id) => {
     try {
-      await axios.delete(`${API_URL}/api/profiles/gallery/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.delete(`/api/profiles/gallery/${id}`);
       setMyPhotos(myPhotos.filter(p => p.id !== id));
       showToast('Foto eliminada exitosamente', 'success');
     } catch (e) { 
@@ -299,7 +284,7 @@ export default function Profile() {
                   {myPhotos.map(photo => (
                     <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/50">
                       <img 
-                        src={`${getImageUrl(photo.photo_url)}?token=${encodeURIComponent(localStorage.getItem('token') || '')}`} 
+                        src={getImageUrl(photo.photo_url)} 
                         alt="Privada"
                         className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110" 
                       />

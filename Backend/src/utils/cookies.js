@@ -1,4 +1,3 @@
-
 const isProd = process.env.NODE_ENV === 'production';
 
 
@@ -10,16 +9,13 @@ const baseCookieOptions = {
     maxAge: 2 * 60 * 60 * 1000 // 2 horas, igual que la duración del JWT
 };
 
-const setSessionCookies = (res, { token, csrfToken }) => {
+
+const setSessionCookie = (res, token) => {
     res.cookie('token', token, baseCookieOptions);
-
-    res.cookie('csrf_token', csrfToken, { ...baseCookieOptions, httpOnly: false });
 };
 
-const clearSessionCookies = (res) => {
-    const clearOptions = { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', path: '/' };
-    res.clearCookie('token', clearOptions);
-    res.clearCookie('csrf_token', { ...clearOptions, httpOnly: false });
+const clearSessionCookie = (res) => {
+    res.clearCookie('token', { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', path: '/' });
 };
 
-module.exports = { setSessionCookies, clearSessionCookies };
+module.exports = { setSessionCookie, clearSessionCookie };

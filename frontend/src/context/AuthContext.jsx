@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx
 import { createContext, useState, useEffect } from 'react';
-import api from '../api';
+import api, { setCsrfToken, clearCsrfToken } from '../api';
 
 export const AuthContext = createContext();
 
@@ -10,14 +10,18 @@ export const AuthProvider = ({ children }) => {
 
   // Ya no leemos el token de localStorage: la cookie httpOnly de sesión viaja
   // sola con la petición. Para saber si ya hay sesión activa (por ejemplo al
-  // recargar la página) le preguntamos al backend quién es el usuario actual.
+  // recargar la página) le preguntamos al backend quién es el usuario actual,
+  // y de paso recuperamos el token CSRF (se perdió de la memoria al recargar).
   useEffect(() => {
     let cancelled = false;
 
     const restoreSession = async () => {
       try {
         const res = await api.get('/api/auth/me');
-        if (!cancelled) setUser(res.data.user);
+        if (!cancelled) {
+          setUser(res.data.user);
+          setCsrfToken(res.data.csrfToken);
+        }
       } catch (error) {
         if (!cancelled) setUser(null);
       } finally {
@@ -30,8 +34,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Se llama después de un login (o verify-2fa) exitoso. El backend ya dejó
-  // la cookie de sesión puesta; aquí solo guardamos los datos del usuario
-  // para la interfaz.
+  // la cookie de sesión puesta y nos manda el csrfToken en el body; aquí lo
+  // guardamos en memoria para que api.js lo reenvíe en cada petición que
+  // escribe datos.
   const login = (data) => {
     const userData = data.user || data;
     if (!userData) {
@@ -39,6 +44,7 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     setUser(userData);
+    setCsrfToken(data.csrfToken);
   };
 
   const logout = async () => {
@@ -48,6 +54,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Error al cerrar sesión:', error);
     } finally {
       setUser(null);
+      clearCsrfToken();
     }
   };
 

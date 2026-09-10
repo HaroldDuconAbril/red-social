@@ -4,20 +4,24 @@ const jwt = require('jsonwebtoken');
 const { authenticator } = require('otplib');
 const qrcode = require('qrcode');
 const { hashToken, generateCsrfToken } = require('../utils/tokens');
-const { setSessionCookies, clearSessionCookies } = require('../utils/cookies');
+const { setSessionCookie, clearSessionCookie } = require('../utils/cookies');
 
 const TOKEN_TTL = '2h';
 
-const signSession = (user) => jwt.sign(
-    { id: user.id, role: user.role, tokenVersion: user.token_version ?? 0 },
+const signSession = (user, csrfToken) => jwt.sign(
+    { id: user.id, role: user.role, tokenVersion: user.token_version ?? 0, csrf: csrfToken },
     process.env.JWT_SECRET,
     { expiresIn: TOKEN_TTL }
 );
 
+// Pone la cookie httpOnly de sesión y devuelve el token CSRF para que el
+// controlador lo incluya en el body de la respuesta (es la única vez que
+// viaja en texto plano; después vive en memoria en el frontend).
 const issueSession = (res, user) => {
-    const token = signSession(user);
     const csrfToken = generateCsrfToken();
-    setSessionCookies(res, { token, csrfToken });
+    const token = signSession(user, csrfToken);
+    setSessionCookie(res, token);
+    return csrfToken;
 };
 
 // Busca una solicitud de verificación aprobada y con un token de activación
@@ -111,10 +115,9 @@ const login = async (req, res) => {
             });
         }
 
-        issueSession(res, user);
-
+        const csrfToken = issueSession(res, user);
         const userResponse = { id: user.id, username: user.username, email: user.email, role: user.role };
-        res.status(200).json({ message: 'Inicio de sesión exitoso', user: userResponse });
+        res.status(200).json({ message: 'Inicio de sesión exitoso', user: userResponse, csrfToken });
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }
@@ -163,10 +166,9 @@ const verify2FALogin = async (req, res) => {
             await pool.query('UPDATE users SET two_factor_enabled = true WHERE id = $1', [userId]);
         }
 
-        issueSession(res, user);
-
+        const csrfToken = issueSession(res, user);
         const userResponse = { id: user.id, username: user.username, email: user.email, role: user.role };
-        res.status(200).json({ message: 'Autenticación exitosa', user: userResponse });
+        res.status(200).json({ message: 'Autenticación exitosa', user: userResponse, csrfToken });
     } catch (error) {
         res.status(500).json({ error: 'Error al verificar 2FA.' });
     }
@@ -259,22 +261,24 @@ const logout = async (req, res) => {
             }
         }
 
-        clearSessionCookies(res);
+        clearSessionCookie(res);
         res.status(200).json({ message: 'Sesión cerrada correctamente.' });
     } catch (error) {
-        clearSessionCookies(res);
+        clearSessionCookie(res);
         res.status(200).json({ message: 'Sesión cerrada correctamente.' });
     }
 };
 
 // 7. Sesión actual: permite al frontend saber quién está logueado a partir de
 // la cookie httpOnly, sin tener que guardar el JWT ni el usuario en
-// localStorage.
+// localStorage. También reenvía el csrfToken (viene ya decodificado del JWT
+// en req.user.csrf gracias a authMiddleware) para que el frontend pueda
+// recuperarlo en memoria tras recargar la página.
 const getMe = async (req, res) => {
     try {
         const result = await pool.query('SELECT id, username, email, role FROM users WHERE id = $1', [req.user.id]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Usuario no encontrado.' });
-        res.status(200).json({ user: result.rows[0] });
+        res.status(200).json({ user: result.rows[0], csrfToken: req.user.csrf });
     } catch (error) {
         res.status(500).json({ error: 'Error interno del servidor.' });
     }

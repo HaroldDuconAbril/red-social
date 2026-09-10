@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 // --- Importación de Rutas ---
@@ -29,16 +30,21 @@ const verificationLimiter = rateLimit({
     limit: 5,
     standardHeaders: true,
     legacyHeaders: false,
+    // Antes solo limitaba por IP: alguien podía mandar solicitudes de
+    // verificación de decenas de correos ajenos desde una sola IP dentro del
+    // mismo límite. Ahora también acotamos por el correo indicado.
+    keyGenerator: (req) => `${req.ip}:${(req.body?.email || '').toLowerCase()}`,
     message: { error: 'Demasiadas solicitudes de verificación.' }
 });
-
 // --- Middlewares ---
 app.use(helmet());
 app.use(cors({
     origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    credentials: true, // necesario para que el navegador mande/reciba las cookies httpOnly de sesión
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 }));
+app.use(cookieParser());
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 app.use('/api/reviews', reviewRoutes);
@@ -67,10 +73,17 @@ app.use('/uploads', (req, res, next) => {
 });
 
 // --- RADAR DE DEBUG (Muy útil para ver qué peticiones llegan) ---
-app.use((req, res, next) => {
-    console.log(`🕵️‍♂️ Petición entrante: ${req.method} ${req.originalUrl}`);
-    next();
-});
+// IMPORTANTE: registramos solo la ruta (req.path), NUNCA req.originalUrl ni la
+// query string completa. Antes cualquier token pasado por ?token=... (u otro
+// dato sensible en la URL) terminaba guardado tal cual en los logs del
+// servidor. Si necesitas depurar parámetros puntuales, hazlo explícitamente
+// y nunca con tokens/contraseñas.
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log(`🕵️‍♂️ Petición entrante: ${req.method} ${req.path}`);
+        next();
+    });
+}
 // ---------------------------------------------------------------
 
 // --- Ruta base de prueba ---

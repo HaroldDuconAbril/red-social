@@ -340,9 +340,18 @@ const getUserProfileWithPhotos = async (req, res) => {
             return res.status(404).json({ error: 'Perfil no encontrado.' });
         }
 
+        const profile = profileQuery.rows[0];
+        const isSelfOrAdmin = requesterRole === 'admin' || requesterId === targetUserId;
+        // El email es un dato personal: solo se lo mostramos al propio dueño
+        // del perfil o a un administrador, nunca a cualquier otro usuario
+        // autenticado que abra ese perfil.
+        if (!isSelfOrAdmin) {
+            delete profile.email;
+        }
+
         let isFriend = false;
         
-        if (requesterRole === 'admin' || requesterId === targetUserId) {
+        if (isSelfOrAdmin) {
             isFriend = true;
         } else {
             const friendCheck = await pool.query(
@@ -371,7 +380,7 @@ const getUserProfileWithPhotos = async (req, res) => {
         }
 
         res.status(200).json({
-            profile: profileQuery.rows[0],
+            profile,
             photos: photos,
             isFriend: isFriend 
         });

@@ -1,19 +1,28 @@
 // src/controllers/adminController.js
 const pool = require('../config/db');
-const crypto = require('crypto');
 const { sendApprovalEmail } = require('../services/emailService');
+const { generateActivationToken, hashToken } = require('../utils/tokens');
 
-// Genera un token de activación de un solo uso, válido 48 horas
-const buildActivationLink = async (email, requestId) => {
-    const activationToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+const ACTIVATION_TOKEN_TTL_HOURS = 48;
+
+// Genera un token de activación de un solo uso, guarda solo su hash en la
+// verification_request correspondiente, y devuelve el enlace ya armado con el
+// valor "crudo" para mandarlo por correo. Antes el enlace solo llevaba
+// ?email=..., así que cualquiera que conociera (o adivinara) un correo
+// aprobado podía activar esa cuenta sin haber recibido el correo.
+const issueActivationLink = async (requestId, email) => {
+    const rawToken = generateActivationToken();
+    const tokenHash = hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + ACTIVATION_TOKEN_TTL_HOURS * 60 * 60 * 1000);
 
     await pool.query(
-        `UPDATE verification_requests SET activation_token = $1, activation_token_expires_at = $2 WHERE id = $3`,
-        [activationToken, expiresAt, requestId]
+        `UPDATE verification_requests
+         SET activation_token_hash = $1, activation_token_expires_at = $2, activation_token_used_at = NULL
+         WHERE id = $3`,
+        [tokenHash, expiresAt, requestId]
     );
 
-    return `${process.env.FRONTEND_ORIGIN}/registro-final?email=${encodeURIComponent(email)}&token=${activationToken}`;
+    return `${process.env.FRONTEND_ORIGIN}/registro-final?token=${rawToken}`;
 };
 
 // Obtener todas las solicitudes pendientes para mostrarlas en el panel
@@ -31,12 +40,13 @@ const getPendingRequests = async (req, res) => {
 const reviewVerificationRequest = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, subcategory_id } = req.body;
+        const { status, subcategory_id } = req.body; 
 
         if (!['aprobado', 'rechazado'].includes(status)) {
             return res.status(400).json({ error: 'Estado inválido.' });
         }
 
+        // 1. Actualizamos el estado de la solicitud
         const updateReq = await pool.query(
             `UPDATE verification_requests SET status = $1, reviewed_by = $2, reviewed_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *`,
             [status, req.user.id, id]
@@ -48,28 +58,31 @@ const reviewVerificationRequest = async (req, res) => {
 
         const requestData = updateReq.rows[0];
 
+        // 2. Si es aprobado y tenemos subcategory_id, lo guardamos en el perfil
         if (status === 'aprobado' && subcategory_id) {
             const userQuery = await pool.query('SELECT id FROM users WHERE email = $1', [requestData.email]);
-
+            
             if (userQuery.rows.length > 0) {
                 const targetUserId = userQuery.rows[0].id;
-
+                
                 await pool.query(
-                    `INSERT INTO profiles (user_id, subcategory_id)
-                     VALUES ($1, $2)
-                     ON CONFLICT (user_id)
+                    `INSERT INTO profiles (user_id, subcategory_id) 
+                     VALUES ($1, $2) 
+                     ON CONFLICT (user_id) 
                      DO UPDATE SET subcategory_id = EXCLUDED.subcategory_id`,
                     [targetUserId, subcategory_id]
                 );
             }
         }
 
+        // 3. NUEVO: si fue aprobado, avisamos al usuario por correo
         if (status === 'aprobado') {
             try {
-                const link = await buildActivationLink(requestData.email, requestData.id);
+                const link = await issueActivationLink(requestData.id, requestData.email);
                 await sendApprovalEmail(requestData.email, link);
             } catch (emailError) {
                 // No queremos que un fallo de correo tumbe la aprobación ya guardada en BD.
+                // Solo lo registramos para revisarlo manualmente si hace falta.
                 console.error('La solicitud se aprobó pero el correo falló:', emailError.message);
             }
         }
@@ -81,7 +94,7 @@ const reviewVerificationRequest = async (req, res) => {
     }
 };
 
-// Forzar creación/aprobación por correo (bypass de rechazos)
+// NUEVA FUNCIÓN: Forzar creación/aprobación por correo (bypass de rechazos)
 const forceApproveUser = async (req, res) => {
     try {
         const { email } = req.body;
@@ -104,7 +117,7 @@ const forceApproveUser = async (req, res) => {
             updatedRequest = result.rows[0];
         }
 
-        const link = await buildActivationLink(updatedRequest.email, updatedRequest.id);
+        const link = await issueActivationLink(updatedRequest.id, updatedRequest.email);
         await sendApprovalEmail(updatedRequest.email, link);
 
         res.status(200).json({ message: 'Usuario autorizado forzosamente. Correo enviado.' });
@@ -114,14 +127,17 @@ const forceApproveUser = async (req, res) => {
     }
 };
 
-// Promover a Admin por Correo
+// NUEVA FUNCIÓN: Promover a Admin por Correo
 const promoteAdminByEmail = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: 'El correo es obligatorio.' });
 
         const promotedUser = await pool.query(
-            'UPDATE users SET role = $1 WHERE email = $2 RETURNING id, username, email, role',
+            // Subimos también token_version: cualquier sesión abierta con el
+            // rol viejo queda invalidada y debe iniciar sesión de nuevo para
+            // obtener un token con el rol actualizado.
+            'UPDATE users SET role = $1, token_version = token_version + 1 WHERE email = $2 RETURNING id, username, email, role',
             ['admin', email]
         );
 
@@ -141,15 +157,18 @@ const promoteAdminByEmail = async (req, res) => {
 
 const createActivityAd = async (req, res) => {
     try {
-        const { admin_id, title, description, event_date, location } = req.body;
+        const { title, description, event_date, location } = req.body;
 
         if (!title || !description) {
             return res.status(400).json({ error: 'El título y la descripción son obligatorios.' });
         }
 
+        // admin_id SIEMPRE sale del token verificado (req.user.id), nunca del
+        // body: si viniera del cliente, cualquiera podría atribuir el anuncio
+        // a otro administrador con solo mandar su id.
         const newAd = await pool.query(
             `INSERT INTO activities_ads (admin_id, title, description, event_date, location) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [admin_id || null, title, description, event_date || null, location || null]
+            [req.user.id, title, description, event_date || null, location || null]
         );
 
         res.status(201).json({
@@ -165,10 +184,10 @@ const createActivityAd = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT
-                u.id,
-                u.username,
-                u.email,
+            SELECT 
+                u.id, 
+                u.username, 
+                u.email, 
                 u.role,
                 p.subcategory_id,
                 COALESCE(c.name, 'Sala General') AS category_name,
@@ -212,31 +231,18 @@ const updateUserGroup = async (req, res) => {
     }
 };
 
-// IMPORTANTE: ahora protegido contra auto-eliminación y contra dejar la plataforma sin admins
 const deleteUser = async (req, res) => {
     const { id } = req.params;
 
     try {
-        if (id === req.user.id) {
-            return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta desde aquí.' });
-        }
-
-        const targetCheck = await pool.query('SELECT role FROM users WHERE id = $1', [id]);
-        if (targetCheck.rows.length === 0) {
-            return res.status(404).json({ error: 'Usuario no encontrado.' });
-        }
-
-        if (targetCheck.rows[0].role === 'admin') {
-            const adminCount = await pool.query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
-            if (parseInt(adminCount.rows[0].count, 10) <= 1) {
-                return res.status(400).json({ error: 'No puedes eliminar al único administrador restante.' });
-            }
-        }
-
         const deletedUser = await pool.query(
             'DELETE FROM users WHERE id = $1 RETURNING id, username, email, role',
             [id]
         );
+
+        if (deletedUser.rows.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado.' });
+        }
 
         res.status(200).json({
             message: 'Usuario eliminado correctamente.',
@@ -253,7 +259,7 @@ const promoteToAdmin = async (req, res) => {
 
     try {
         const promotedUser = await pool.query(
-            'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, username, email, role',
+            'UPDATE users SET role = $1, token_version = token_version + 1 WHERE id = $2 RETURNING id, username, email, role',
             ['admin', id]
         );
 

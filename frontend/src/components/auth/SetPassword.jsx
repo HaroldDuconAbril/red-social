@@ -1,53 +1,36 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import { toast } from 'react-hot-toast';
 import { Lock, Eye, EyeOff, Users } from 'lucide-react';
-import { API_URL } from '../../config';
 
 export default function SetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const email = searchParams.get('email');
+  // El enlace del correo ahora manda un token de activación de un solo uso,
+  // no el email en texto plano: así solo quien recibió el correo puede
+  // activar la cuenta (antes bastaba con conocer/adivinar el email aprobado).
   const token = searchParams.get('token');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const [profileType, setProfileType] = useState('chico_solo');
+  
+  // NUEVO: Estado para el tipo de perfil
+  const [profileType, setProfileType] = useState('chico_solo'); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!email || !token) {
-      toast.error('Este enlace no es válido. Revisa el correo de aprobación e intenta de nuevo.');
+    if (!token) {
+      toast.error('Enlace inválido. Solicita uno nuevo desde tu correo de aprobación.');
       return;
     }
-
-    setSubmitting(true);
     try {
-      await axios.post(API_URL + '/api/auth/set-password', { email, password, profileType, token });
+      await api.post('/api/auth/set-password', { token, password, profileType });
       toast.success('¡Cuenta activada! Ya puedes iniciar sesión.');
       navigate('/login');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al configurar la contraseña');
-    } finally {
-      setSubmitting(false);
     }
   };
-
-  if (!email || !token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#080B12] p-4">
-        <div className="w-full max-w-md bg-[#0E1320]/80 border border-red-500/30 backdrop-xl p-8 rounded-3xl shadow-2xl text-center">
-          <h2 className="text-2xl font-black text-white mb-2">Enlace inválido</h2>
-          <p className="text-gray-400 text-sm">
-            Este enlace de activación no es válido o está incompleto. Usa el enlace exacto que recibiste por correo.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#080B12] p-4">
@@ -61,11 +44,12 @@ export default function SetPassword() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-
+          
+          {/* NUEVO: Selector de Tipo de Perfil */}
           <div className="relative">
             <label className="block text-gray-400 text-xs font-bold uppercase mb-2">¿Cómo te identificas?</label>
             <div className="relative">
-              <select
+              <select 
                 value={profileType}
                 onChange={(e) => setProfileType(e.target.value)}
                 className="w-full bg-black/40 border border-white/10 text-white rounded-xl p-4 appearance-none focus:border-red-500 outline-none transition cursor-pointer"
@@ -78,19 +62,19 @@ export default function SetPassword() {
             </div>
           </div>
 
+          {/* Campo de Contraseña Original */}
           <div className="relative">
             <label className="block text-gray-400 text-xs font-bold uppercase mb-2">Nueva Contraseña</label>
-            <input
+            <input 
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-black/40 border border-white/10 text-white rounded-xl p-4 focus:border-red-500 outline-none transition"
               placeholder="••••••••"
-              minLength={8}
               required
             />
-            <button
-              type="button"
+            <button 
+              type="button" 
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-10 text-gray-500 hover:text-white"
             >
@@ -98,14 +82,12 @@ export default function SetPassword() {
             </button>
           </div>
 
-          <button
-            disabled={submitting}
-            className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-black py-4 rounded-xl transition shadow-lg shadow-red-900/20"
-          >
-            {submitting ? 'Activando...' : 'Activar Cuenta'}
+          <button className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl transition shadow-lg shadow-red-900/20">
+            Activar Cuenta
           </button>
         </form>
       </div>
     </div>
   );
 }
+

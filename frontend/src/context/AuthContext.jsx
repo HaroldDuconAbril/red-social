@@ -1,55 +1,54 @@
 // src/context/AuthContext.jsx
-import {createContext,useState,useEffect}from 'react';
+import { createContext, useState, useEffect } from 'react';
+import api from '../api';
 
-export const AuthContext=createContext();
+export const AuthContext = createContext();
 
-export const AuthProvider=({children})=>{
-  const [user,setUser]=useState(null);
-  const [loading,setLoading]=useState(true);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(()=>{
-    const token=localStorage.getItem('token');
-    const savedUser=localStorage.getItem('user');
+ 
+  useEffect(() => {
+    let cancelled = false;
 
-    if(token&&savedUser){
-      try{
-        const parsedUser=JSON.parse(savedUser);
-        setUser({...parsedUser,token});
-      }catch(error){
-        console.error('Error al leer el usuario guardado:',error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
+    const restoreSession = async () => {
+      try {
+        const res = await api.get('/api/auth/me');
+        if (!cancelled) setUser(res.data.user);
+      } catch (error) {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    }
+    };
 
-    setLoading(false);
-  },[]);
+    restoreSession();
+    return () => { cancelled = true; };
+  }, []);
 
-  const login=(data)=>{
-    const token=data.token;
-    const userData=data.user||data;
-
-    if(!token){
-      console.error('No se recibió token en login:',data);
+  
+  const login = (data) => {
+    const userData = data.user || data;
+    if (!userData) {
+      console.error('No se recibió información de usuario en login:', data);
       return;
     }
-
-    const completeUser={...userData,token};
-
-    localStorage.setItem('token',token);
-    localStorage.setItem('user',JSON.stringify(userData));
-    setUser(completeUser);
+    setUser(userData);
   };
 
-  const logout=()=>{
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await api.post('/api/auth/logout');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
-  return(
-    <AuthContext.Provider value={{user,login,logout,loading}}>
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

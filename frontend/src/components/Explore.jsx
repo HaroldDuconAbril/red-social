@@ -232,8 +232,17 @@ export default function Explore() {
           </div>
         )}
 
-        {selectedUser && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+      </div>
+
+      {/* El modal se renderiza FUERA del contenedor "relative z-10" de arriba
+          a propósito: ese div crea su propio stacking context (por tener
+          z-index), así que aunque el modal use z-50, quedaba encerrado
+          dentro de ese contexto con techo z-10 y el Navbar (z-50, pero en
+          el stacking context raíz) terminaba tapando su parte superior.
+          Sacándolo de ahí y subiendo su z-index, ahora sí queda siempre
+          por encima de todo, incluido el Navbar. */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-[#0E1320] border border-white/15 w-full max-w-2xl rounded-3xl p-6 md:p-8 relative shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 
               <button
@@ -392,7 +401,6 @@ export default function Explore() {
           </div>
         )}
 
-      </div>
     </div>
   );
 }

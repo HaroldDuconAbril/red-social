@@ -178,11 +178,38 @@ export default function Profile() {
             <h3 className="text-2xl font-bold text-white">{profileData?.alias_name || 'Usuario'}</h3>
             <p className="text-red-400 font-bold text-sm">{profileData?.role === 'admin' ? '⭐ Administrador' : 'Miembro'}</p>
             <div className="flex flex-wrap justify-center gap-2 mt-3">
-              {profileData?.subcategory_name && (
-                <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
-                  {profileData.category_name} · {profileData.subcategory_name}
-                </span>
-              )}
+              {(() => {
+                const cat = profileData?.category_name?.trim();
+                const sub = profileData?.subcategory_name?.trim();
+                // Cuando el grupo y la subcategoría son el mismo nombre (ej. "General"),
+                // mostramos un solo badge en vez de repetirlo dos veces.
+                const isSame = cat && sub && cat.toLowerCase() === sub.toLowerCase();
+
+                if (!cat && !sub) return null;
+
+                if (isSame) {
+                  return (
+                    <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
+                      {cat}
+                    </span>
+                  );
+                }
+
+                return (
+                  <>
+                    {cat && (
+                      <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
+                        {cat}
+                      </span>
+                    )}
+                    {sub && (
+                      <span className="bg-indigo-900/40 text-indigo-300 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/30 uppercase">
+                        {sub}
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
               {profileData?.profile_type && PROFILE_TYPE_LABELS[profileData.profile_type] && (
                 <span className="bg-red-900/40 text-red-300 text-[10px] font-black px-3 py-1 rounded-full border border-red-500/30 uppercase">
                   {PROFILE_TYPE_LABELS[profileData.profile_type]}

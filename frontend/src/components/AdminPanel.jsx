@@ -24,6 +24,11 @@ export default function AdminPanel() {
   const [newSubCat, setNewSubCat] = useState({ category_id: '', name: '' });
 
   // Estados para creación de salas y acciones especiales
+  // Selección de categoría "en curso" por usuario en la tabla de Usuarios,
+  // separada del subcategory_id ya guardado. Permite elegir primero el
+  // grupo (categoría) y luego la subcategoría, igual que en Solicitudes.
+  const [userGroupCategory, setUserGroupCategory] = useState({});
+
   const [newRoom, setNewRoom] = useState({ name: '', type: 'chat' });
   const [selectedUsersForRoom, setSelectedUsersForRoom] = useState([]);
   const [bypassEmail, setBypassEmail] = useState('');
@@ -110,6 +115,15 @@ toast.error('Hubo un error al eliminar el usuario.');
       console.error('Error al cambiar el grupo:', error);
       toast.error('Error al actualizar el grupo del usuario.');
     }
+  };
+
+  // Categoría que se debe mostrar seleccionada para un usuario: si el admin
+  // ya tocó el select de categoría para esa fila, respetamos esa elección;
+  // si no, la deducimos de su subcategoría actual.
+  const getSelectedCategoryForUser = (u) => {
+    if (userGroupCategory[u.id] !== undefined) return userGroupCategory[u.id];
+    const currentSub = subcategories.find(s => s.id === u.subcategory_id);
+    return currentSub ? String(currentSub.category_id) : '';
   };
 
   const handleCreateCategory = async (e) => {
@@ -455,21 +469,32 @@ toast.error('Hubo un error al eliminar el usuario.');
                         </span>
                       </td>
                       <td className="py-4">
-                        <select
-                          value={u.subcategory_id || ''}
-                          onChange={(e) => handleChangeUserGroup(u.id, e.target.value)}
-                          className="bg-black/50 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-purple-500 max-w-[180px]"
-                          title="Cambiar el grupo de este usuario"
-                        >
-                          <option value="">Sin grupo</option>
-                          {categories.map(cat => (
-                            <optgroup key={cat.id} label={cat.name}>
-                              {subcategories.filter(s => s.category_id == cat.id).map(s => (
+                        <div className="flex flex-col gap-1.5">
+                          <select
+                            value={getSelectedCategoryForUser(u)}
+                            onChange={(e) => setUserGroupCategory(prev => ({ ...prev, [u.id]: e.target.value }))}
+                            className="bg-black/50 border border-white/10 text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-purple-500 max-w-[170px]"
+                            title="1. Elegir el grupo (categoría) del usuario"
+                          >
+                            <option value="">Sin grupo...</option>
+                            {categories.map(cat => (
+                              <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={u.subcategory_id || ''}
+                            onChange={(e) => handleChangeUserGroup(u.id, e.target.value)}
+                            className="bg-black/50 border border-white/10 text-white rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-purple-500 max-w-[170px]"
+                            title="2. Elegir la subcategoría dentro del grupo"
+                          >
+                            <option value="">Sin subcategoría</option>
+                            {subcategories
+                              .filter(s => String(s.category_id) === String(getSelectedCategoryForUser(u)))
+                              .map(s => (
                                 <option key={s.id} value={s.id}>{s.name}</option>
                               ))}
-                            </optgroup>
-                          ))}
-                        </select>
+                          </select>
+                        </div>
                       </td>
                       <td className="py-4">
                         <button onClick={() => deleteUser(u.id)} className="inline-flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 font-black px-4 py-2 rounded-xl transition-all text-sm">

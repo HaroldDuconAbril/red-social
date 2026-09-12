@@ -169,16 +169,34 @@ export default function Explore() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    {profile.category_name && (
-                      <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
-                        {profile.category_name}
-                      </span>
-                    )}
-                    {profile.subcategory_name && (
-                      <span className="bg-red-900/40 text-red-300 text-[10px] font-black px-3 py-1 rounded-full border border-red-500/30 uppercase">
-                        {profile.subcategory_name}
-                      </span>
-                    )}
+                    {(() => {
+                      const cat = profile.category_name?.trim();
+                      const sub = profile.subcategory_name?.trim();
+                      const isSame = cat && sub && cat.toLowerCase() === sub.toLowerCase();
+
+                      if (isSame) {
+                        return (
+                          <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
+                            {cat}
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <>
+                          {cat && (
+                            <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
+                              {cat}
+                            </span>
+                          )}
+                          {sub && (
+                            <span className="bg-red-900/40 text-red-300 text-[10px] font-black px-3 py-1 rounded-full border border-red-500/30 uppercase">
+                              {sub}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                     {profile.profile_type && PROFILE_TYPE_LABELS[profile.profile_type] && (
                       <span className="bg-blue-900/40 text-blue-300 text-[10px] font-black px-3 py-1 rounded-full border border-blue-500/30 uppercase">
                         {PROFILE_TYPE_LABELS[profile.profile_type]}
@@ -245,12 +263,34 @@ export default function Explore() {
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
-                    <span className="bg-purple-900/40 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">
-                      {selectedUser.profile.category_name}
-                    </span>
-                    <span className="bg-red-900/40 text-red-300 text-xs font-bold px-3 py-1 rounded-full border border-red-500/30">
-                      {selectedUser.profile.subcategory_name}
-                    </span>
+                    {(() => {
+                      const cat = selectedUser.profile.category_name?.trim();
+                      const sub = selectedUser.profile.subcategory_name?.trim();
+                      const isSame = cat && sub && cat.toLowerCase() === sub.toLowerCase();
+
+                      if (isSame) {
+                        return (
+                          <span className="bg-purple-900/40 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">
+                            {cat}
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <>
+                          {cat && (
+                            <span className="bg-purple-900/40 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">
+                              {cat}
+                            </span>
+                          )}
+                          {sub && (
+                            <span className="bg-red-900/40 text-red-300 text-xs font-bold px-3 py-1 rounded-full border border-red-500/30">
+                              {sub}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                     {PROFILE_TYPE_LABELS[selectedUser.profile.profile_type] && (
                       <span className="bg-blue-900/40 text-blue-300 text-xs font-bold px-3 py-1 rounded-full border border-blue-500/30">
                         {PROFILE_TYPE_LABELS[selectedUser.profile.profile_type]}

@@ -45,7 +45,8 @@ const getPendingRequests = async (req, res) => {
              FROM friendships f
              JOIN users u ON f.sender_id = u.id
              LEFT JOIN profiles p ON u.id = p.user_id
-             WHERE f.receiver_id = $1 AND f.status = 'pendiente'`,
+             WHERE f.receiver_id = $1 AND f.status = 'pendiente'
+             ORDER BY f.id DESC`,
             [userId]
         );
 
@@ -93,29 +94,49 @@ const respondToRequest = async (req, res) => {
     }
 };
 
-// 4. Obtener contactos confirmados (Amistades aceptadas)
+// 4. Obtener contactos disponibles para chatear.
+// - Si soy admin: veo a TODOS los usuarios (puedo escribirle a cualquiera).
+// - Si soy usuario normal: veo a mis amigos aceptados MÁS a todos los admins
+//   (siempre puedo escribirle al administrador, aunque no me haya "aceptado").
 const getAcceptedConnections = async (req, res) => {
     try {
         const userId = req.user.id;
+        const userRole = req.user.role;
 
-        // Esta consulta busca el usuario que NO es el usuario logueado
-        // usando una lógica de selección condicional (CASE)
+        if (userRole === 'admin') {
+            const allUsers = await pool.query(
+                `SELECT u.id AS user_id, u.username AS alias_name,
+                        COALESCE(p.profile_picture_url, '') AS profile_picture_url
+                 FROM users u
+                 LEFT JOIN profiles p ON u.id = p.user_id
+                 WHERE u.id != $1
+                 ORDER BY u.username ASC`,
+                [userId]
+            );
+            return res.status(200).json({ contacts: allUsers.rows });
+        }
+
         const query = await pool.query(
-            `SELECT 
-                CASE 
-                    WHEN f.sender_id = $1 THEN f.receiver_id 
-                    ELSE f.sender_id 
-                END AS user_id,
-                u.username AS alias_name,
-                COALESCE(p.profile_picture_url, '') AS profile_picture_url
-             FROM friendships f
-             JOIN users u ON (u.id = CASE 
-                                        WHEN f.sender_id = $1 THEN f.receiver_id 
-                                        ELSE f.sender_id 
-                                     END)
-             LEFT JOIN profiles p ON u.id = p.user_id
-             WHERE (f.sender_id = $1 OR f.receiver_id = $1) 
-               AND f.status = 'aceptada'`,
+            `SELECT DISTINCT ON (user_id) * FROM (
+                -- Amigos aceptados
+                SELECT
+                    CASE WHEN f.sender_id = $1 THEN f.receiver_id ELSE f.sender_id END AS user_id,
+                    u.username AS alias_name,
+                    COALESCE(p.profile_picture_url, '') AS profile_picture_url
+                FROM friendships f
+                JOIN users u ON (u.id = CASE WHEN f.sender_id = $1 THEN f.receiver_id ELSE f.sender_id END)
+                LEFT JOIN profiles p ON u.id = p.user_id
+                WHERE (f.sender_id = $1 OR f.receiver_id = $1) AND f.status = 'aceptada'
+
+                UNION ALL
+
+                -- Administradores: siempre disponibles para escribirles
+                SELECT u.id AS user_id, u.username AS alias_name,
+                       COALESCE(p.profile_picture_url, '') AS profile_picture_url
+                FROM users u
+                LEFT JOIN profiles p ON u.id = p.user_id
+                WHERE u.role = 'admin' AND u.id != $1
+            ) combined`,
             [userId]
         );
 

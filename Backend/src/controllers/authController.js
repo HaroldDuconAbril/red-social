@@ -215,9 +215,17 @@ const setPassword = async (req, res) => {
         );
 
         const finalProfileType = profileType || requestData.profile_type || 'chico_solo';
+
+        // Toda cuenta nueva arranca en el grupo "General" hasta que el admin la mueva a otro
+        const generalGroup = await client.query(
+            `SELECT s.id FROM subcategories s JOIN categories c ON s.category_id = c.id
+             WHERE c.name = 'General' AND s.name = 'General' LIMIT 1`
+        );
+        const defaultSubcategoryId = generalGroup.rows[0]?.id || null;
+
         await client.query(
-            "INSERT INTO profiles (user_id, profile_type) VALUES ($1, $2)",
-            [newUser.rows[0].id, finalProfileType]
+            "INSERT INTO profiles (user_id, profile_type, subcategory_id) VALUES ($1, $2, $3)",
+            [newUser.rows[0].id, finalProfileType, defaultSubcategoryId]
         );
 
         // Token de un solo uso: se marca como consumido en la misma transacción

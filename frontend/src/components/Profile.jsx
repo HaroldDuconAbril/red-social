@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api';
 import { ImagePlus, Lock, Camera, Info, CheckCircle, AlertCircle } from 'lucide-react';
-import { API_URL, getImageUrl } from '../config';
+import { API_URL, getImageUrl, PROFILE_TYPE_LABELS } from '../config';
 
 export default function Profile() {
   const { user } = useContext(AuthContext);
@@ -177,6 +177,18 @@ export default function Profile() {
             </div>
             <h3 className="text-2xl font-bold text-white">{profileData?.alias_name || 'Usuario'}</h3>
             <p className="text-red-400 font-bold text-sm">{profileData?.role === 'admin' ? '⭐ Administrador' : 'Miembro'}</p>
+            <div className="flex flex-wrap justify-center gap-2 mt-3">
+              {profileData?.subcategory_name && (
+                <span className="bg-purple-900/40 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full border border-purple-500/30 uppercase">
+                  {profileData.category_name} · {profileData.subcategory_name}
+                </span>
+              )}
+              {profileData?.profile_type && PROFILE_TYPE_LABELS[profileData.profile_type] && (
+                <span className="bg-red-900/40 text-red-300 text-[10px] font-black px-3 py-1 rounded-full border border-red-500/30 uppercase">
+                  {PROFILE_TYPE_LABELS[profileData.profile_type]}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-4 border-b border-white/10 mb-6 justify-center">

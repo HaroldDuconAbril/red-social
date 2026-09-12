@@ -25,7 +25,7 @@ const sendApprovalEmail = async (toEmail, link) => {
         const safeLink = escapeHtml(parsedUrl.toString());
 
         const { data, error } = await resend.emails.send({
-            from: 'Administración - Red Social <notificaciones@haducon.shop>',
+            from: 'Administración - Red Social <Autorizaciones@haducon.shop>',
             to: toEmail,
             subject: '¡Tu solicitud ha sido aprobada!',
             html: `

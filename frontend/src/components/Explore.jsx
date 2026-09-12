@@ -3,7 +3,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { UserPlus, Check, ShieldAlert, X, Image as ImageIcon, MapPin, User, Lock, Star } from 'lucide-react';
-import { API_URL, getImageUrl } from '../config';
+import { API_URL, getImageUrl, PROFILE_TYPE_LABELS } from '../config';
 import { toast } from 'react-hot-toast';
 import { StarDisplay, StarInput } from './StarRating';
 
@@ -179,6 +179,11 @@ export default function Explore() {
                         {profile.subcategory_name}
                       </span>
                     )}
+                    {profile.profile_type && PROFILE_TYPE_LABELS[profile.profile_type] && (
+                      <span className="bg-blue-900/40 text-blue-300 text-[10px] font-black px-3 py-1 rounded-full border border-blue-500/30 uppercase">
+                        {PROFILE_TYPE_LABELS[profile.profile_type]}
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-xs text-gray-500 mt-4 line-clamp-2 min-h-[2rem]">
@@ -246,6 +251,11 @@ export default function Explore() {
                     <span className="bg-red-900/40 text-red-300 text-xs font-bold px-3 py-1 rounded-full border border-red-500/30">
                       {selectedUser.profile.subcategory_name}
                     </span>
+                    {PROFILE_TYPE_LABELS[selectedUser.profile.profile_type] && (
+                      <span className="bg-blue-900/40 text-blue-300 text-xs font-bold px-3 py-1 rounded-full border border-blue-500/30">
+                        {PROFILE_TYPE_LABELS[selectedUser.profile.profile_type]}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

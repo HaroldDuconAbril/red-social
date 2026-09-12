@@ -88,7 +88,6 @@ toast.error('Debes asignar una Categoría y Subcategoría antes de aprobar al us
       });
     } catch (error) {
 toast.error('Hubo un error al procesar esta solicitud.');
-      alert('Hubo un error al procesar esta solicitud.');
     }
   };
 
@@ -99,7 +98,17 @@ toast.error('Hubo un error al procesar esta solicitud.');
       setUsers(prev => prev.filter(u => u.id !== id));
     } catch (error) {
 toast.error('Hubo un error al eliminar el usuario.');
-      alert('Hubo un error al eliminar el usuario.');
+    }
+  };
+
+  const handleChangeUserGroup = async (userId, subcategoryId) => {
+    try {
+      await api.put(`/api/admin/users/${userId}/group`, { subcategory_id: subcategoryId || null });
+      toast.success('Grupo del usuario actualizado.');
+      loadData();
+    } catch (error) {
+      console.error('Error al cambiar el grupo:', error);
+      toast.error('Error al actualizar el grupo del usuario.');
     }
   };
 
@@ -111,8 +120,7 @@ toast.error('Hubo un error al eliminar el usuario.');
       setNewCatName('');
       loadData();
     } catch (error) {
-     toast.error(error.response?.data?.error || 'Error al crear la categoría.');
-      alert(error.response?.data?.error || 'Error al crear la categoría.');
+      toast.error(error.response?.data?.error || 'Error al crear la categoría.');
     }
   };
 
@@ -195,13 +203,13 @@ toast.error('Hubo un error al eliminar el usuario.');
         participants: selectedUsersForRoom
       });
       
-      alert('Sala creada y usuarios asignados con éxito.');
+      toast.success('Sala creada y usuarios asignados con éxito.');
       setNewRoom({ name: '', type: 'chat' });
       setSelectedUsersForRoom([]);
       loadData();
     } catch (error) {
       console.error('Error al crear sala:', error);
-      alert('Error al crear la sala.');
+      toast.error('Error al crear la sala.');
     }
   };
 
@@ -212,7 +220,7 @@ toast.error('Hubo un error al eliminar el usuario.');
       setRooms(prev => prev.filter(r => r.id !== roomId));
     } catch (error) {
       console.error('Error al disolver sala:', error);
-      alert('Error al disolver la sala.');
+      toast.error('Error al disolver la sala.');
     }
   };
 
@@ -431,6 +439,7 @@ toast.error('Hubo un error al eliminar el usuario.');
                     <th className="pb-4">Usuario</th>
                     <th className="pb-4">Email</th>
                     <th className="pb-4">Rol</th>
+                    <th className="pb-4">Grupo</th>
                     <th className="pb-4">Acción</th>
                   </tr>
                 </thead>
@@ -444,6 +453,23 @@ toast.error('Hubo un error al eliminar el usuario.');
                         <span className={`px-3 py-1 rounded-full text-xs font-black ${u.role === 'admin' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/5 text-gray-400 border border-white/10'}`}>
                           {u.role}
                         </span>
+                      </td>
+                      <td className="py-4">
+                        <select
+                          value={u.subcategory_id || ''}
+                          onChange={(e) => handleChangeUserGroup(u.id, e.target.value)}
+                          className="bg-black/50 border border-white/10 text-white rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-purple-500 max-w-[180px]"
+                          title="Cambiar el grupo de este usuario"
+                        >
+                          <option value="">Sin grupo</option>
+                          {categories.map(cat => (
+                            <optgroup key={cat.id} label={cat.name}>
+                              {subcategories.filter(s => s.category_id == cat.id).map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
                       </td>
                       <td className="py-4">
                         <button onClick={() => deleteUser(u.id)} className="inline-flex items-center gap-2 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 font-black px-4 py-2 rounded-xl transition-all text-sm">

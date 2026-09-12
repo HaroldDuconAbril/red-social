@@ -5,3 +5,9 @@ export const getImageUrl = (path) => {
   if (path.startsWith('http')) return path;
   return `${API_URL}${path}`;
 };
+
+export const PROFILE_TYPE_LABELS = {
+  chico_solo: 'Chico Solo',
+  chica_sola: 'Chica Sola',
+  pareja: 'Pareja'
+};
